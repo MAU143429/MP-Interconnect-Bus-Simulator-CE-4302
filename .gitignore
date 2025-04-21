@@ -1,0 +1,39 @@
+# Archivos de compilación
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dll
+
+# Archivos generados por el build
+build/
+bin/
+*.log
+
+# Archivos del sistema y editores
+.DS_Store
+Thumbs.db
+
+# Archivos de VSCode
+.vscode/
+*.code-workspace
+
+# Archivos del proyecto
+pe*_encoded.txt
+*.txt~
+
+# Makefiles u otros scripts generados
+Makefile
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Archivos de respaldo
+*~
+*.bak
+
+# Archivos ocultos de depuración (gdb/lldb)
+.gdb_history
+.lldb_history
