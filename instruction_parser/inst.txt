@@ -1,0 +1,8 @@
+PE2
+WRITE_MEM 0xF000, 0x00, 0x02         
+READ_MEM 0x01, 0xF004, 0x04          
+BROADCAST_INVALIDATE 0x02, 0x05      
+INV_ACK 0x02                         
+INV_COMPLETE 0x03                   
+READ_RESP 0x01, 0xCAFEBABE          
+WRITE_RESP 0x01, 0x01    
