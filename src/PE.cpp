@@ -4,6 +4,7 @@
 
 PE::PE(uint8_t src, uint8_t qos)
     : src_id(src), qos_value(qos) {
+        
     // Inicializa toda la caché con ceros
     for (auto& block : cache) {
         block.fill(0);
