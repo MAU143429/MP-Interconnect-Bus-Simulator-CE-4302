@@ -25,7 +25,7 @@ pe*_encoded.txt
 *.txt~
 
 # Makefiles u otros scripts generados
-Makefile
+
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
