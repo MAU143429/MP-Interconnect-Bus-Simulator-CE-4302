@@ -1,6 +1,6 @@
 #include "../include/memory.h"
-#include <chrono>
-#include <thread>
+#include <iostream>
+#include <vector>
 #include <functional>
 
 Memory::Memory(std::function<void(const SMS&)> interconnect_cb)
@@ -15,48 +15,39 @@ void Memory::process_message(const SMS& msg) {
             handle_write(msg);
             break;
         default:
-            std::cerr << "Mensaje no válido para Memory\n";
+            std::cerr << "Mensaje no valido para Memory\n";
             break;
     }
 }
 
+
 void Memory::handle_read(const SMS& msg) {
-    std::cout << "[READ_MEM] PE" << static_cast<int>(msg.src)
-              << " solicitó leer " << msg.size
-              << " bytes desde la dirección " << msg.addr << "\n";
+    std::cout << "[READ_MEM] PE" << msg.src
+              << " solicito leer " << msg.size
+              << " bytes desde la direccion " << msg.addr << "\n";
 
-    // Simula tiempo = SIZE * 0.2
-    double delay_seconds = msg.size * 0.2;
-    std::thread([=]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(delay_seconds * 1000)));
+    // Simular datos sin delay ni hilos
+    SMS response(MessageType::READ_RESP);
+    response.dest = msg.src;
+    response.qos = msg.qos;
+    response.data = std::vector<int>(msg.size, 0xAB);  // datos ficticios con int
 
-        SMS response(MessageType::READ_RESP);
-        response.dest = msg.src;
-        response.qos = msg.qos;
-        response.data = std::vector<uint8_t>(msg.size, 0xAB);  // data ficticia
-
-        send_to_interconnect(response);
-    }).detach();
+    send_to_interconnect(response);
 }
 
 void Memory::handle_write(const SMS& msg) {
-    uint32_t total_bytes = msg.size * 16;
+    int total_bytes = msg.size * 16;
 
-    std::cout << "[WRITE_MEM] PE" << static_cast<int>(msg.src)
-              << " solicitó escribir " << msg.size
-              << " líneas de caché (" << total_bytes
-              << " bytes) desde la línea " << msg.cache_line
-              << " a la dirección " << msg.addr << "\n";
+    std::cout << "[WRITE_MEM] PE" << msg.src
+              << " solicito escribir " << msg.size
+              << " lineas de cache (" << total_bytes
+              << " bytes) desde la linea " << msg.cache_line
+              << " a la direccion " << msg.addr << "\n";
 
-    double delay_seconds = total_bytes * 0.2;
-    std::thread([=]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(delay_seconds * 1000)));
+    SMS response(MessageType::WRITE_RESP);
+    response.dest = msg.src;
+    response.qos = msg.qos;
+    response.status = 1; // escritura exitosa
 
-        SMS response(MessageType::WRITE_RESP);
-        response.dest = msg.src;
-        response.qos = msg.qos;
-        response.status = 0x1; // escritura exitosa
-
-        send_to_interconnect(response);
-    }).detach();
+    send_to_interconnect(response);
 }

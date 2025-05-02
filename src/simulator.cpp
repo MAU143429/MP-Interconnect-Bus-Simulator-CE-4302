@@ -4,10 +4,11 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <chrono>
 
 // Callback simulado para enviar mensajes al interconnect
 void send_to_interconnect(const SMS& msg) {
-    std::cout << "-> Interconnect recibió mensaje tipo ";
+    std::cout << "[INTERCONNECT] Recibio mensaje tipo ";
     switch (msg.type) {
         case MessageType::READ_RESP:
             std::cout << "READ_RESP\n";
@@ -50,15 +51,38 @@ int main() {
     write_sms.data = {10, 20, 30, 40};
 
     // Mostrar el contenido del mensaje
-    std::cout << "\n=== Información del mensaje WRITE_MEM ===\n";
+    std::cout << "\n=== Informacion del mensaje WRITE_MEM ===\n";
     write_sms.printInfo();
     std::cout << "========================================\n\n";
 
     // Procesar mensaje con la clase Memory
     memory.process_message(write_sms);
 
-    // Esperar un poco por si hay hilos simulados
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    // Esperar 2 segundos
+    for (volatile int i = 0; i < 200000000; ++i) {
+        // Busy-wait loop to simulate a delay
+    }
+
+    // Crear mensaje tipo READ_MEM
+    SMS read_sms(MessageType::READ_MEM);
+    read_sms.src = 3;
+    read_sms.addr = 0x18AF;
+    read_sms.size = 4;
+    read_sms.qos = 0x15;
+    read_sms.cache_line = 5;
+    read_sms.dest = 7;
+
+    // Mostrar el contenido del mensaje
+    std::cout << "\n=== Informacion del mensaje READ_MEM ===\n";
+    read_sms.printInfo();
+    std::cout << "========================================\n\n";
+
+    // Procesar mensaje con la clase Memory
+    memory.process_message(read_sms);
+
+
+    // No se requiere pausa ya que no hay hilos simulados
 
     return 0;
 }

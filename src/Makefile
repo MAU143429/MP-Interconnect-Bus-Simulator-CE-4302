@@ -2,14 +2,15 @@
 TARGET = simulator
 
 # Archivos fuente
-SRCS = simulator.cpp PE.cpp sms.cpp
+SRCS = simulator.cpp PE.cpp sms.cpp memory.cpp
 
 # Archivos objeto (generados automáticamente)
 OBJS = $(SRCS:.cpp=.o)
 
 # Flags del compilador
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -O2
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+#CXXFLAGS = -std=c++20 -Wall -Wextra -O2
 
 # Regla por defecto
 all: $(TARGET)
