@@ -1,23 +1,24 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <array>
-#include <vector>
-#include <cstdint>
-#include <cstddef>
-
-constexpr size_t MEMORY_SIZE = 4096;  // Palabras (32 bits)
-constexpr size_t WORD_SIZE = 4;       // Bytes por palabra
+#include "../include/sms.h"
+#include <thread>
+#include <functional>
+#include <iostream>
 
 class Memory {
 public:
-    Memory();
+    // Simula la memoria; puede ser un puntero a una función de envío al interconnect
+    explicit Memory(std::function<void(const SMS&)> interconnect_cb);
 
-    std::vector<uint8_t> read(uint32_t addr, size_t size) const;
-    void write(uint32_t addr, const std::vector<uint8_t>& data);
+    // Procesa un mensaje recibido
+    void process_message(const SMS& msg);
 
 private:
-    std::array<uint32_t, MEMORY_SIZE> memory;
+    std::function<void(const SMS&)> send_to_interconnect;
+
+    void handle_read(const SMS& msg);
+    void handle_write(const SMS& msg);
 };
 
-#endif // MEMORY_H
+#endif
