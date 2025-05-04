@@ -1,4 +1,4 @@
-#include "../include/memory.h"
+#include "../include/Memory.h"
 #include <iostream>
 #include <vector>
 #include <functional>
@@ -36,12 +36,12 @@ void Memory::handle_read(const SMS& msg) {
 }
 
 void Memory::handle_write(const SMS& msg) {
-    int total_bytes = msg.size * 16;
+    int total_bytes = msg.num_of_cache_lines * 16;
 
     std::cout << "[WRITE_MEM] PE" << msg.src
-              << " solicito escribir " << msg.size
+              << " solicito escribir " << msg.num_of_cache_lines
               << " lineas de cache (" << total_bytes
-              << " bytes) desde la linea " << msg.cache_line
+              << " bytes) desde la linea " << msg.start_cache_line
               << " a la direccion " << msg.addr << "\n";
 
     SMS response(MessageType::WRITE_RESP);

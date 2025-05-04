@@ -30,10 +30,6 @@ int main() {
         processing_elements.emplace_back(i, qos);
     }
 
-    for (const auto& pe : processing_elements) {
-        pe.printCacheInfo();
-    }
-
     // Crear clase Memory con el callback
     Memory memory(send_to_interconnect);
 
@@ -41,14 +37,9 @@ int main() {
     SMS write_sms(MessageType::WRITE_MEM);
     write_sms.src = 3;
     write_sms.addr = 0x8000;
-    write_sms.size = 4;
+    write_sms.num_of_cache_lines = 2;
+    write_sms.start_cache_line = 5;
     write_sms.qos = 0x15;
-    write_sms.cache_line = 5;
-    write_sms.dest = 7;
-    write_sms.status = 1;
-
-    // Simular datos de escritura
-    write_sms.data = {10, 20, 30, 40};
 
     // Mostrar el contenido del mensaje
     std::cout << "\n=== Informacion del mensaje WRITE_MEM ===\n";
@@ -58,20 +49,12 @@ int main() {
     // Procesar mensaje con la clase Memory
     memory.process_message(write_sms);
 
-
-    // Esperar 2 segundos
-    for (volatile int i = 0; i < 200000000; ++i) {
-        // Busy-wait loop to simulate a delay
-    }
-
     // Crear mensaje tipo READ_MEM
     SMS read_sms(MessageType::READ_MEM);
-    read_sms.src = 3;
+    read_sms.src = 2;
     read_sms.addr = 0x18AF;
     read_sms.size = 4;
     read_sms.qos = 0x15;
-    read_sms.cache_line = 5;
-    read_sms.dest = 7;
 
     // Mostrar el contenido del mensaje
     std::cout << "\n=== Informacion del mensaje READ_MEM ===\n";
@@ -81,8 +64,6 @@ int main() {
     // Procesar mensaje con la clase Memory
     memory.process_message(read_sms);
 
-
-    // No se requiere pausa ya que no hay hilos simulados
 
     return 0;
 }
