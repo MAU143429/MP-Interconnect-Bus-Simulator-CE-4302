@@ -1,12 +1,12 @@
 #include "../include/Memory.h"
-#include "../include/GlobalClock.h"
 #include <iostream>
 #include <vector>
 #include <functional>
 
+using namespace std::chrono;
+
 Memory::Memory(std::function<void(const SMS&)> interconnect_cb)
     : send_to_interconnect(std::move(interconnect_cb)) {}
-
 
 void Memory::process_message(const SMS& msg) {
     request_queue.push(msg);
@@ -18,24 +18,25 @@ void Memory::begin_processing_next() {
     current_msg = request_queue.front();
     request_queue.pop();
 
-    int delay = 0;
+    int delay_ms = 0;
     if (current_msg.type == MessageType::READ_MEM) {
-        delay = current_msg.size; // 1 tick por byte
-        std::cout << "[Tick " << GlobalClock::now() << "] [READ_MEM] PE" << current_msg.src
-                  << " pidio leer " << current_msg.size << " bytes\n";
+        delay_ms = static_cast<int>(current_msg.size * 200);  // 0.2s por byte → 200ms
+        std::cout << "[MEMORY] [READ_MEM] PE" << current_msg.src
+                  << " pidió leer " << current_msg.size << " bytes\n";
     } else if (current_msg.type == MessageType::WRITE_MEM) {
         int total_bytes = current_msg.num_of_cache_lines * 16;
-        delay = total_bytes;
-        std::cout << "[Tick " << GlobalClock::now() << "] [WRITE_MEM] PE" << current_msg.src
-                  << " pidio escribir " << total_bytes << " bytes\n";
+        delay_ms = static_cast<int>(total_bytes * 200);  // 0.2s por byte
+        std::cout << "[MEMORY] [WRITE_MEM] PE" << current_msg.src
+                  << " pidió escribir " << total_bytes << " bytes\n";
     }
 
+    ready_time = steady_clock::now() + milliseconds(delay_ms);
     is_busy = true;
-    ready_tick = GlobalClock::now() + delay;
 }
-void Memory::tick() {
+
+void Memory::update() {
     if (is_busy) {
-        if (GlobalClock::now() >= ready_tick) {
+        if (steady_clock::now() >= ready_time) {
             if (current_msg.type == MessageType::READ_MEM) {
                 SMS response(MessageType::READ_RESP);
                 response.dest = current_msg.src;
@@ -49,7 +50,7 @@ void Memory::tick() {
                 response.status = 1;
                 send_to_interconnect(response);
             }
-            is_busy = false; 
+            is_busy = false;
         }
     }
 
@@ -57,6 +58,3 @@ void Memory::tick() {
         begin_processing_next();
     }
 }
-
-
-

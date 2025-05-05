@@ -2,25 +2,24 @@
 #define MEMORY_H
 
 #include "../include/SMS.h"
-#include "../include/Event.h"
-#include <thread>
 #include <functional>
 #include <iostream>
 #include <queue>
+#include <chrono>  // <-- necesario
 
 class Memory {
 public:
-    // Simula la memoria; puede ser un puntero a una función de envío al interconnect
     explicit Memory(std::function<void(const SMS&)> interconnect_cb);
-    void tick();
+    void update();  // cambia "tick" a "update" (más semántico en tiempo real)
     void process_message(const SMS& msg);
 
 private:
     std::function<void(const SMS&)> send_to_interconnect;
     std::queue<SMS> request_queue; 
     void begin_processing_next();   
+
     bool is_busy = false;
-    int ready_tick = 0;
+    std::chrono::steady_clock::time_point ready_time;  // <-- reemplaza ready_tick
     SMS current_msg;  
 };
 

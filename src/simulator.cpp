@@ -7,8 +7,9 @@
 #include <vector>
 #include <thread>
 #include <chrono>
-
 #include <string>
+
+
 
 // Callback simulado para enviar mensajes al interconnect
 void send_to_interconnect(const SMS& msg) {
@@ -74,15 +75,16 @@ int main() {
     memory.process_message(read_sms);
 
     
-    const int MAX_TICKS = 100;
+    // Loop de simulación en tiempo real
+    const int MAX_SECONDS = 10;
+    auto start = std::chrono::steady_clock::now();
 
-    for (int i = 0; i < MAX_TICKS; ++i) {
-        std::cout << "[GLOBAL TICK " << GlobalClock::now() << "]\n";
-
-        memory.tick();              
-        GlobalClock::advance();   
-        
+    while (std::chrono::steady_clock::now() - start < std::chrono::seconds(MAX_SECONDS)) {
+        memory.update();  
+        std::this_thread::yield();  // Ceder el hilo para evitar un bucle apretado
     }
+
+    std::cout << "Simulación terminada\n";
 
     
     return 0;
