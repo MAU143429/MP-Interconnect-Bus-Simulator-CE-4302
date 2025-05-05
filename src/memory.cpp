@@ -1,4 +1,5 @@
 #include "../include/Memory.h"
+#include "../include/GlobalClock.h"
 #include <iostream>
 #include <vector>
 #include <functional>
@@ -6,48 +7,56 @@
 Memory::Memory(std::function<void(const SMS&)> interconnect_cb)
     : send_to_interconnect(std::move(interconnect_cb)) {}
 
+
 void Memory::process_message(const SMS& msg) {
-    switch (msg.type) {
-        case MessageType::READ_MEM:
-            handle_read(msg);
-            break;
-        case MessageType::WRITE_MEM:
-            handle_write(msg);
-            break;
-        default:
-            std::cerr << "Mensaje no valido para Memory\n";
-            break;
+    request_queue.push(msg);
+}
+
+void Memory::begin_processing_next() {
+    if (request_queue.empty()) return;
+
+    current_msg = request_queue.front();
+    request_queue.pop();
+
+    int delay = 0;
+    if (current_msg.type == MessageType::READ_MEM) {
+        delay = current_msg.size; // 1 tick por byte
+        std::cout << "[Tick " << GlobalClock::now() << "] [READ_MEM] PE" << current_msg.src
+                  << " pidio leer " << current_msg.size << " bytes\n";
+    } else if (current_msg.type == MessageType::WRITE_MEM) {
+        int total_bytes = current_msg.num_of_cache_lines * 16;
+        delay = total_bytes;
+        std::cout << "[Tick " << GlobalClock::now() << "] [WRITE_MEM] PE" << current_msg.src
+                  << " pidio escribir " << total_bytes << " bytes\n";
+    }
+
+    is_busy = true;
+    ready_tick = GlobalClock::now() + delay;
+}
+void Memory::tick() {
+    if (is_busy) {
+        if (GlobalClock::now() >= ready_tick) {
+            if (current_msg.type == MessageType::READ_MEM) {
+                SMS response(MessageType::READ_RESP);
+                response.dest = current_msg.src;
+                response.qos = current_msg.qos;
+                response.data = std::vector<int>(current_msg.size, 0xAB);
+                send_to_interconnect(response);
+            } else if (current_msg.type == MessageType::WRITE_MEM) {
+                SMS response(MessageType::WRITE_RESP);
+                response.dest = current_msg.src;
+                response.qos = current_msg.qos;
+                response.status = 1;
+                send_to_interconnect(response);
+            }
+            is_busy = false; 
+        }
+    }
+
+    if (!is_busy) {
+        begin_processing_next();
     }
 }
 
 
-void Memory::handle_read(const SMS& msg) {
-    std::cout << "[READ_MEM] PE" << msg.src
-              << " solicito leer " << msg.size
-              << " bytes desde la direccion " << msg.addr << "\n";
 
-    // Simular datos sin delay ni hilos
-    SMS response(MessageType::READ_RESP);
-    response.dest = msg.src;
-    response.qos = msg.qos;
-    response.data = std::vector<int>(msg.size, 0xAB);  // datos ficticios con int
-
-    send_to_interconnect(response);
-}
-
-void Memory::handle_write(const SMS& msg) {
-    int total_bytes = msg.num_of_cache_lines * 16;
-
-    std::cout << "[WRITE_MEM] PE" << msg.src
-              << " solicito escribir " << msg.num_of_cache_lines
-              << " lineas de cache (" << total_bytes
-              << " bytes) desde la linea " << msg.start_cache_line
-              << " a la direccion " << msg.addr << "\n";
-
-    SMS response(MessageType::WRITE_RESP);
-    response.dest = msg.src;
-    response.qos = msg.qos;
-    response.status = 1; // escritura exitosa
-
-    send_to_interconnect(response);
-}

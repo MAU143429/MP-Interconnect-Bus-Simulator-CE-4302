@@ -1,24 +1,27 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "../include/sms.h"
+#include "../include/SMS.h"
+#include "../include/Event.h"
 #include <thread>
 #include <functional>
 #include <iostream>
+#include <queue>
 
 class Memory {
 public:
     // Simula la memoria; puede ser un puntero a una función de envío al interconnect
     explicit Memory(std::function<void(const SMS&)> interconnect_cb);
-
-    // Procesa un mensaje recibido
+    void tick();
     void process_message(const SMS& msg);
 
 private:
     std::function<void(const SMS&)> send_to_interconnect;
-
-    void handle_read(const SMS& msg);
-    void handle_write(const SMS& msg);
+    std::queue<SMS> request_queue; 
+    void begin_processing_next();   
+    bool is_busy = false;
+    int ready_tick = 0;
+    SMS current_msg;  
 };
 
 #endif

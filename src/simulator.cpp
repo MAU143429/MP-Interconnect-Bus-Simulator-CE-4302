@@ -1,11 +1,13 @@
 #include "../include/PE.h"
 #include "../include/SMS.h"
 #include "../include/Memory.h"
+#include "../include/Parser.h"
+#include "../include/GlobalClock.h"
 #include <iostream>
 #include <vector>
 #include <thread>
 #include <chrono>
-#include "../include/Parser.h"
+
 #include <string>
 
 // Callback simulado para enviar mensajes al interconnect
@@ -36,19 +38,18 @@ int main() {
         int qos_dummy = 0; 
         pes.emplace_back(pe_id, qos_dummy, instrs);
     }
+
+    /* 
     std::vector<SMS> printinst = pes[0].getInstructions();
     std::cout << printinst.size() << " instrucciones disponibles.\n";
 
-    if (printinst.empty()) {
-        std::cout << "No hay instrucciones para imprimir.\n";
-    } else {
-        for (const auto& msg : printinst) {
-            std::cout << "\n=== Informacion del mensaje ===\n";
-            msg.printInfo();
-        }
-    }
-    /*
+    for (const auto& msg : printinst) {
+        msg.printInfo();
+    }*/
+    
     // Crear clase Memory con el callback
+
+
     Memory memory(send_to_interconnect);
 
     // Crear mensaje tipo WRITE_MEM
@@ -58,11 +59,6 @@ int main() {
     write_sms.num_of_cache_lines = 2;
     write_sms.start_cache_line = 5;
     write_sms.qos = 0x15;
-
-    // Mostrar el contenido del mensaje
-    std::cout << "\n=== Informacion del mensaje WRITE_MEM ===\n";
-    write_sms.printInfo();
-    std::cout << "========================================\n\n";
 
     // Procesar mensaje con la clase Memory
     memory.process_message(write_sms);
@@ -74,15 +70,21 @@ int main() {
     read_sms.size = 4;
     read_sms.qos = 0x15;
 
-    // Mostrar el contenido del mensaje
-    std::cout << "\n=== Informacion del mensaje READ_MEM ===\n";
-    read_sms.printInfo();
-    std::cout << "========================================\n\n";
-
     // Procesar mensaje con la clase Memory
     memory.process_message(read_sms);
 
-    */
+    
+    const int MAX_TICKS = 100;
+
+    for (int i = 0; i < MAX_TICKS; ++i) {
+        std::cout << "[GLOBAL TICK " << GlobalClock::now() << "]\n";
+
+        memory.tick();              
+        GlobalClock::advance();   
+        
+    }
+
+    
     return 0;
     
 }

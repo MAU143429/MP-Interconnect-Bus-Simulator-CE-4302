@@ -1,6 +1,12 @@
 #include "../include/SMS.h"
 #include <iostream>
 
+SMS::SMS()
+    : type(MessageType::READ_MEM),  // Valor por defecto, puede ser cualquiera válido
+      src(0), addr(0), size(0), qos(0), dest(0),
+      inv_cache_line(0), num_of_cache_lines(0),
+      start_cache_line(0), status(0), data{} {}
+
 SMS::SMS(MessageType t)
     : type(t),
       src(0),

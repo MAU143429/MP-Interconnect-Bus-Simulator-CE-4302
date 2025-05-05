@@ -2,7 +2,7 @@
 TARGET = simulator
 
 # Archivos fuente
-SRCS = Simulator.cpp PE.cpp SMS.cpp Memory.cpp Parser.cpp
+SRCS = Simulator.cpp PE.cpp SMS.cpp Memory.cpp Parser.cpp GlobalClock.cpp
 
 # Archivos objeto (generados automáticamente)
 OBJS = $(SRCS:.cpp=.o)

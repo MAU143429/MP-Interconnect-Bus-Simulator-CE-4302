@@ -26,10 +26,11 @@ public:
     std::vector<int> data;   // Datos (READ_RESP, WRITE_MEM)
     int num_of_cache_lines;  // Líneas de caché a escribir (WRITE_MEM)
     int start_cache_line;    // Línea de caché inicial (WRITE_MEM)
-    int inv_cache_line;          // Línea de caché (BROADCAST_INVALIDATE)
+    int inv_cache_line;      // Línea de caché (BROADCAST_INVALIDATE)
     int status;              // STATUS en WRITE_RESP
 
-    SMS(MessageType t);      // Constructor de la clase SMS
+    SMS(MessageType t);      // Constructor con tipo de mensaje
+    SMS();                   // constructor vacio
 
     void printInfo() const;
 };
