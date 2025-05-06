@@ -20,7 +20,7 @@ int main() {
     // Crear memoria y arrancarla
     Memory memory([&interconnect](const SMS& resp) {
         std::cout << "[MEMORY] Respuesta generada para el PE" << resp.dest <<  "enviando al Interconnect " "\n";
-        interconnect.receiveFromMemory(resp);
+        interconnect.receiveMessage(resp);
 
     });
     memory.start();
@@ -37,10 +37,8 @@ int main() {
         int qos_dummy = 0;
         auto pe = std::make_unique<PE>(pe_id, qos_dummy, instrs);
     
-        interconnect.registerPE(pe_id, [pe_ptr = pe.get()](const SMS& resp) {
-            pe_ptr->receiveResponse(resp);
-        });
-    
+        interconnect.registerPE(pe_id, pe.get());
+
         pes.push_back(std::move(pe));
     }
 

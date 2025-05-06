@@ -36,21 +36,10 @@ void Interconnect::setMemory(Memory* mem) {
     memory = mem;
 }
 
-void Interconnect::registerPE(int pe_id, std::function<void(const SMS&)> callback) {
-    std::lock_guard<std::mutex> lock(queue_mutex);
-    pe_callbacks[pe_id] = std::move(callback);
+void Interconnect::registerPE(int id, PE* pe) {
+    pe_registry[id] = pe;
 }
 
-void Interconnect::receiveFromMemory(const SMS& msg) {
-    std::lock_guard<std::mutex> lock(queue_mutex);
-    auto it = pe_callbacks.find(msg.dest);
-    if (it != pe_callbacks.end()) {
-        std::cout << "[INTERCONNECT] Enviando respuesta al PE" << msg.dest << "\n";
-        it->second(msg);  // Llamar al callback del PE correspondiente
-    } else {
-        std::cerr << "[INTERCONNECT] PE destino " << msg.dest << " no registrado.\n";
-    }
-}
 
 void Interconnect::processQueue() {
     while (running) {
@@ -84,12 +73,22 @@ void Interconnect::processQueue() {
             std::this_thread::yield();
         }
 
-        if (memory) {
+        if (msg.type == MessageType::READ_RESP || msg.type == MessageType::WRITE_RESP) {
+            // Es una respuesta para un PE
+            auto it = pe_registry.find(msg.dest);
+            if (it != pe_registry.end()) {
+                std::cout << "[INTERCONNECT] Enviando respuesta al PE" << msg.dest << "\n";
+                it->second->receiveResponse(msg);
+            } else {
+                std::cerr << "[INTERCONNECT] PE destino no registrado: " << msg.dest << "\n";
+            }
+        } else if (memory) {
             std::cout << "[INTERCONNECT] Mensaje del PE " << msg.src  << " procesado... Enviando mensaje a memoria \n";
             memory->receive(msg);
         } else {
             std::cerr << "[INTERCONNECT] Error: memoria no conectada\n";
         }
+        
     }
 
     std::cout << "[INTERCONNECT] Finalizó procesamiento de mensajes.\n";
