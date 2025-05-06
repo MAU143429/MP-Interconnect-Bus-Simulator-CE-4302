@@ -13,7 +13,7 @@ bool Interconnect::receiveMessage(const SMS& msg) {
     {
         std::lock_guard<std::mutex> lock(queue_mutex);
         message_queue.push(msg);
-        std::cout << "[INTERCONNECT] Mensaje recibido de PE" << msg.src << "\n";
+        std::cout << "[INTERCONNECT] Mensaje recibido de PE" << msg.src << " esperando a ser procesado...\n";
     }
     cv.notify_one();
     return true;
@@ -68,10 +68,8 @@ void Interconnect::processQueue() {
             std::this_thread::yield();
         }
 
-        std::cout << "[INTERCONNECT] Mensaje procesado.\n";
-
         if (memory) {
-            std::cout << "[INTERCONNECT] Enviando mensaje a memoria\n";
+            std::cout << "[INTERCONNECT] Mensaje del PE " << msg.src  << " procesado... Enviando mensaje a memoria \n";
             memory->receive(msg);
         } else {
             std::cerr << "[INTERCONNECT] Error: memoria no conectada\n";

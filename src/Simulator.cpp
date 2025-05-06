@@ -16,9 +16,8 @@ int main() {
 
     // Crear memoria y arrancarla
     Memory memory([](const SMS& resp) {
-        std::cout << "[RESPUESTA] Enviada a PE" << resp.dest << "\n";
-        resp.printInfo();
-        std::cout << "-----------------------\n";
+        std::cout << "[RESPUESTA] Respuesta generada y enviada a PE " << resp.dest << "\n";
+        
     });
     memory.start();
 

@@ -29,7 +29,7 @@ void Memory::receive(const SMS& msg) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         incoming_queue.push(msg);
-        std::cout << "[MEMORY] Mensaje recibido de PE" << msg.src << "\n";
+        std::cout << "[MEMORY] Mensaje recibido de PE" << msg.src << " esperando a ser procesado...\n";
     }
     cv.notify_one();
 }
@@ -67,8 +67,8 @@ void Memory::managerThread() {
             auto delay = duration_cast<steady_clock::duration>(duration<double>(delay_secs));
             auto ready_time = now + delay;
 
-            std::cout << "[MEMORY] Iniciando operación de PE" << msg.src
-                      << " (delay: " << delay_secs << "s)\n";
+            std::cout << "[MEMORY] Iniciando operacion de PE" << msg.src
+                      << " duracion esperada: delay-> " << delay_secs << "secs\n";
 
             ActiveOperation op;
             op.msg = msg;
@@ -88,7 +88,7 @@ void Memory::managerThread() {
                 resp.status = 1; // dummy
                 resp.data = {42}; // dummy
 
-                std::cout << "[MEMORY] Terminó operación de PE" << msg.src << "\n";
+                std::cout << "[MEMORY] Termino solicitud de PE" << msg.src << ", generando respuesta...\n";
                 send_response(resp);
                 it = active_operations.erase(it);
                 cv.notify_one();  
