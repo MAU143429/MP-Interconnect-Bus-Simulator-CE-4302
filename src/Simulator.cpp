@@ -37,7 +37,6 @@ int main() {
         int qos_dummy = 0;
         auto pe = std::make_unique<PE>(pe_id, qos_dummy, instrs);
     
-        // 🔽 REGISTRAR CALLBACK DE RESPUESTA EN INTERCONNECT
         interconnect.registerPE(pe_id, [pe_ptr = pe.get()](const SMS& resp) {
             pe_ptr->receiveResponse(resp);
         });
