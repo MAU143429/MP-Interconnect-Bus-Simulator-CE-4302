@@ -9,13 +9,22 @@
 #include <thread>
 
 int main() {
-    /*
+    
     const int NUM_PE = 10;
     std::vector<std::unique_ptr<PE>> pes;
     std::vector<std::thread> pe_threads;
 
-    // Crear e iniciar el interconnect
+    // Crear memoria y arrancarla
+    Memory memory([](const SMS& resp) {
+        std::cout << "[RESPUESTA] Enviada a PE" << resp.dest << "\n";
+        resp.printInfo();
+        std::cout << "-----------------------\n";
+    });
+    memory.start();
+
+    // Crear e iniciar Interconnect
     Interconnect interconnect;
+    interconnect.setMemory(&memory);  // Conectar memoria
     interconnect.start();
 
     // Cargar instrucciones y crear PEs
@@ -41,30 +50,7 @@ int main() {
         t.join();
     }
 
-    // Detener el interconnect
     interconnect.stop();
-
-    std::cout << "[SIMULADOR] Todos los PE han terminado.\n";*/
-
-    Memory memory([](const SMS& resp) {
-        std::cout << "[RESPUESTA] Enviada a PE" << resp.dest << "\n";
-        resp.printInfo();
-        std::cout << "-----------------------\n";
-    });
-
-    memory.start();
-
-    SMS m1(MessageType::WRITE_MEM); m1.src = 1; m1.num_of_cache_lines = 5;
-    SMS m2(MessageType::READ_MEM);  m2.src = 2; m2.size = 64;
-    SMS m3(MessageType::READ_MEM);  m3.src = 3; m3.size = 128;
-    SMS m4(MessageType::WRITE_MEM); m4.src = 4; m4.num_of_cache_lines = 2;
-    SMS m5(MessageType::READ_MEM);  m5.src = 5; m5.size = 512;
-
-    memory.receive(m1);
-    memory.receive(m2);
-    memory.receive(m3);
-    memory.receive(m4);
-    memory.receive(m5); // debe quedar esperando
 
     memory.stop();
 

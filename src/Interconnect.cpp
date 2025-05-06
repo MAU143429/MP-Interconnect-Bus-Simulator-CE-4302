@@ -1,4 +1,5 @@
 #include "../include/Interconnect.h"
+#include "../include/Memory.h"
 #include <iostream>
 #include <chrono>
 
@@ -31,29 +32,63 @@ void Interconnect::stop() {
     }
 }
 
+void Interconnect::setMemory(Memory* mem) {
+    memory = mem;
+}
+
 void Interconnect::processQueue() {
-    while (running) {
+    while (running || !message_queue.empty() || !pending.empty()) {
         std::unique_lock<std::mutex> lock(queue_mutex);
-        cv.wait(lock, [&]() { return !message_queue.empty() || !running; });
 
-        if (!running) break;
+        cv.wait_for(lock, std::chrono::milliseconds(10), [&]() {
+            return !message_queue.empty() || !pending.empty() || !running;
+        });
 
-        SMS msg = message_queue.front();
-        message_queue.pop();
-        lock.unlock();
+        auto now = std::chrono::steady_clock::now();
 
-        // Simular tiempo de transferencia
-        double delay_secs = 2.0;
-        if (msg.type == MessageType::WRITE_MEM || msg.type == MessageType::READ_RESP) {
-            delay_secs += msg.data.size() * 0.1;
-        } else if (msg.type == MessageType::READ_MEM || msg.type == MessageType::WRITE_RESP) {
-            delay_secs += msg.size * 0.1;
+        // Revisar si algún mensaje pendiente ya está listo
+        for (auto it = pending.begin(); it != pending.end(); ) {
+            if (now >= it->ready_time) {
+                std::cout << "[INTERCONNECT] Procesando mensaje de PE"
+                          << it->msg.src << " (retraso completado)\n";
+                std::cout << "[INTERCONNECT] Mensaje procesado.\n";
+
+                if (memory) {
+                    std::cout << "[INTERCONNECT] Enviando mensaje a memoria\n";
+                    memory->receive(it->msg);
+                } else {
+                    std::cerr << "[INTERCONNECT] Error: memoria no conectada\n";
+                }
+                it = pending.erase(it);
+            } else {
+                ++it;
+            }
         }
 
-        std::cout << "[INTERCONNECT] Procesando mensaje de PE" << msg.src
-                  << " con delay de " << delay_secs << "s\n";
-        std::this_thread::sleep_for(std::chrono::duration<double>(delay_secs));
+        // Si hay mensajes nuevos, calcular su tiempo y pasarlos a `pending`
+        while (!message_queue.empty()) {
+            SMS msg = message_queue.front();
+            message_queue.pop();
 
-        std::cout << "[INTERCONNECT] Mensaje procesado.\n";
+            double delay_secs = 2.0;
+            if (msg.type == MessageType::WRITE_MEM) {
+                delay_secs += msg.num_of_cache_lines * 16 * 0.1;
+            } else if (msg.type == MessageType::READ_RESP) {
+                delay_secs += msg.data.size() * 0.1;
+            } else if (msg.type == MessageType::READ_MEM || msg.type == MessageType::WRITE_RESP) {
+                delay_secs += msg.size * 0.1;
+            }
+
+            auto ready_time = std::chrono::steady_clock::now() +
+                              std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                                  std::chrono::duration<double>(delay_secs));
+
+            pending.push_back(PendingMessage{msg, ready_time});
+
+            std::cout << "[INTERCONNECT] PE" << msg.src
+                      << " programado para " << delay_secs << "s\n";
+        }
     }
+
+    std::cout << "[INTERCONNECT] Finalizó procesamiento de mensajes.\n";
 }
