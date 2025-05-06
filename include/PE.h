@@ -1,21 +1,33 @@
+// --- PE.h ---
 #ifndef PE_H
 #define PE_H
 
+#include "SMS.h"
 #include <vector>
-#include "sms.h"
+#include <functional>
+#include <atomic>
 
 class PE {
 public:
-    PE(int src, int qos, const std::vector<SMS>& instrs);
+    PE(int id, int qos, const std::vector<SMS>& instructions);
 
-    int getSrcId() const;
-    int getQoS() const;
-    std::vector<SMS> getInstructions() const;
+    PE(const PE&) = delete;
+    PE& operator=(const PE&) = delete;
+    PE(PE&&) noexcept = default;
+    PE& operator=(PE&&) noexcept = default;
+
+    void run(std::function<bool(const SMS&)> send_to_interconnect);
+    void receiveResponse(const SMS& response);
+
+    int getId() const;
+    const std::vector<SMS>& getInstructionList() const;
 
 private:
-    int src_id;
-    int qos_value;
-    std::vector<SMS> instructions;
+    int id;
+    int qos;
+    std::vector<SMS> instruction_list;
+    std::atomic<bool> awaiting_response;
+    size_t current_instruction_index;
 };
 
-#endif // PE_H
+#endif
