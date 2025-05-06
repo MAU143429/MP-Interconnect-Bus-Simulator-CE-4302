@@ -14,15 +14,18 @@ int main() {
     std::vector<std::unique_ptr<PE>> pes;
     std::vector<std::thread> pe_threads;
 
+    // Crear e iniciar Interconnect
+    Interconnect interconnect;
+
     // Crear memoria y arrancarla
-    Memory memory([](const SMS& resp) {
-        std::cout << "[RESPUESTA] Respuesta generada y enviada a PE " << resp.dest << "\n";
-        
+    Memory memory([&interconnect](const SMS& resp) {
+        std::cout << "[MEMORY] Respuesta generada para el PE" << resp.dest <<  "enviando al Interconnect " "\n";
+        interconnect.receiveFromMemory(resp);
+
     });
     memory.start();
 
-    // Crear e iniciar Interconnect
-    Interconnect interconnect;
+    
     interconnect.setMemory(&memory);  // Conectar memoria
     interconnect.start();
 
@@ -30,9 +33,16 @@ int main() {
     for (int pe_id = 1; pe_id <= NUM_PE; ++pe_id) {
         std::string filename = "data/Workload_1/PE" + std::to_string(pe_id) + ".txt";
         std::vector<SMS> instrs = parseInstructionsFromFile(filename);
-
+    
         int qos_dummy = 0;
-        pes.push_back(std::make_unique<PE>(pe_id, qos_dummy, instrs));
+        auto pe = std::make_unique<PE>(pe_id, qos_dummy, instrs);
+    
+        // 🔽 REGISTRAR CALLBACK DE RESPUESTA EN INTERCONNECT
+        interconnect.registerPE(pe_id, [pe_ptr = pe.get()](const SMS& resp) {
+            pe_ptr->receiveResponse(resp);
+        });
+    
+        pes.push_back(std::move(pe));
     }
 
     // Lanzar hilos para cada PE

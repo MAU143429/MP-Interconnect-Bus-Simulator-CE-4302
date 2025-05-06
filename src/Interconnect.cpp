@@ -36,6 +36,22 @@ void Interconnect::setMemory(Memory* mem) {
     memory = mem;
 }
 
+void Interconnect::registerPE(int pe_id, std::function<void(const SMS&)> callback) {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    pe_callbacks[pe_id] = std::move(callback);
+}
+
+void Interconnect::receiveFromMemory(const SMS& msg) {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    auto it = pe_callbacks.find(msg.dest);
+    if (it != pe_callbacks.end()) {
+        std::cout << "[INTERCONNECT] Enviando respuesta al PE" << msg.dest << "\n";
+        it->second(msg);  // Llamar al callback del PE correspondiente
+    } else {
+        std::cerr << "[INTERCONNECT] PE destino " << msg.dest << " no registrado.\n";
+    }
+}
+
 void Interconnect::processQueue() {
     while (running) {
         std::unique_lock<std::mutex> lock(queue_mutex);
