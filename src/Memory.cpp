@@ -33,6 +33,7 @@ void Memory::receive(const SMS& msg) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         incoming_queue.push(msg);
+        is_idle = false; 
         std::cout << "[MEMORY] Mensaje recibido de PE" << msg.src << " esperando a ser procesado...\n";
     }
     cv.notify_one();
@@ -46,7 +47,7 @@ void Memory::setResponseCallback(std::function<void(const SMS&)> cb) {
 // Hilo de gestión de operaciones
 // Este hilo se encarga de procesar las solicitudes de memoria y enviar respuestas
 void Memory::managerThread() {
-    using namespace std::chrono;
+    using namespace std::chrono; 
 
     while (true) {
         std::unique_lock<std::mutex> lock(mutex_);
@@ -54,8 +55,11 @@ void Memory::managerThread() {
             return !incoming_queue.empty() || !active_operations.empty() || !running;
         });
 
-        if (!running && incoming_queue.empty() && active_operations.empty())
+        if (!running && incoming_queue.empty() && active_operations.empty()){
+            is_idle = true;
             break;
+        }
+            
 
 
         // Mover a activos si hay espacio maximo 4 operaciones al mismo tiempo (quad channel)
@@ -102,5 +106,8 @@ void Memory::managerThread() {
                 ++it;
             }
         }
+
+        is_idle = incoming_queue.empty() && active_operations.empty();
+
     }
 }

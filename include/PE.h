@@ -18,6 +18,7 @@ public:
 
     void run(std::function<bool(const SMS&)> send_to_interconnect);
     void receiveResponse(const SMS& response);
+    
 
     int getId() const;
     const std::vector<SMS>& getInstructionList() const;
@@ -29,6 +30,7 @@ private:
     std::atomic<bool> awaiting_response;
     size_t current_instruction_index;
     std::function<bool(const SMS&)> send_callback;
+
 
 };
 

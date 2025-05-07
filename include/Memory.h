@@ -17,6 +17,8 @@ public:
     ~Memory();
 
     void setResponseCallback(std::function<void(const SMS&)> cb);
+    bool isIdle() const { return is_idle.load(); }
+
 
 
     void receive(const SMS& msg); 
@@ -30,7 +32,7 @@ private:
         SMS msg;
         std::chrono::steady_clock::time_point ready_time;
     };
-
+    std::atomic<bool> is_idle = true;
     std::queue<SMS> incoming_queue;
     std::vector<ActiveOperation> active_operations;
 

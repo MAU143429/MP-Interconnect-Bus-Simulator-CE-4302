@@ -18,7 +18,13 @@ bool Interconnect::receiveMessage(const SMS& msg) {
         std::cout << "[INTERCONNECT] INV_ACK recibido, encolado en invalidation_queue.\n";
     } else {
         message_queue.push(msg);
-        std::cout << "[INTERCONNECT] Mensaje recibido de PE" << msg.src << " esperando a ser procesado...\n";
+
+        if (msg.type == MessageType::WRITE_RESP || msg.type == MessageType::READ_RESP){
+            std::cout << "[INTERCONNECT] Mensaje recibido de [MEMORY] para PE" << msg.dest << " esperando a ser procesado...\n";
+        }else{
+            std::cout << "[INTERCONNECT] Mensaje recibido de PE" << msg.src << " esperando a ser procesado...\n";
+        }
+        
     }
 
     cv.notify_one();
@@ -49,13 +55,18 @@ void Interconnect::registerPE(int id, PE* pe) {
 
 
 void Interconnect::processQueue() {
-    while (running) {
+    while (running || !message_queue.empty() || (memory && !memory->isIdle())) {
         std::unique_lock<std::mutex> lock(queue_mutex);
         cv.wait(lock, [&]() {
             return !message_queue.empty() || !running;
         });
 
-        if (!running || message_queue.empty()) continue;
+        //if (!running || message_queue.empty()) continue;
+
+        if (message_queue.empty()) {
+            std::this_thread::yield();
+            continue;
+        }
 
         SMS msg = message_queue.front();
         message_queue.pop();
@@ -63,7 +74,7 @@ void Interconnect::processQueue() {
 
         // Si es BROADCAST_INVALIDATE, manejar toda la lógica especial
         if (msg.type == MessageType::BROADCAST_INVALIDATE) {
-            std::cout << "[INTERCONNECT] Procesando BROADCAST_INVALIDATE de PE" << msg.src << " con delay de 2s\n";
+            std::cout << "[INTERCONNECT] Procesando BROADCAST_INVALIDATE de PE" << msg.src << " con delay de 2s \n";
 
             std::this_thread::sleep_for(std::chrono::seconds(2));  // Simular delay global
 
@@ -129,8 +140,15 @@ void Interconnect::processQueue() {
             delay_secs += msg.size * 0.1;
         }
 
-        std::cout << "[INTERCONNECT] Procesando mensaje de PE" << msg.src
-                  << " con delay de " << delay_secs << "s\n";
+        if (msg.type == MessageType::WRITE_RESP || msg.type == MessageType::READ_RESP){
+            std::cout << "[INTERCONNECT] Procesando mensaje de [MEMORY] para  PE" << msg.dest
+                  << " con delay de " << delay_secs << "s \n";
+        }else{
+            std::cout << "[INTERCONNECT] Procesando mensaje de PE" << msg.src
+                  << " con delay de " << delay_secs << "s \n";
+        }
+
+        
 
         auto ready_time = std::chrono::steady_clock::now() + std::chrono::duration<double>(delay_secs);
         while (std::chrono::steady_clock::now() < ready_time) {
@@ -140,7 +158,12 @@ void Interconnect::processQueue() {
         if (msg.type == MessageType::READ_RESP || msg.type == MessageType::WRITE_RESP) {
             auto it = pe_registry.find(msg.dest);
             if (it != pe_registry.end()) {
-                std::cout << "[INTERCONNECT] Enviando respuesta al PE" << msg.dest << "\n";
+                if (msg.type == MessageType::READ_RESP) {
+                    std::cout << "[INTERCONNECT] Enviando respuesta de tipo READ_RESP al PE" << msg.dest << "\n";
+                }else{
+                    std::cout << "[INTERCONNECT] Enviando respuesta de tipo WRITE_RESP al PE" << msg.dest << "\n";
+                }
+                
                 it->second->receiveResponse(msg);
             } else {
                 std::cerr << "[INTERCONNECT] PE destino no registrado: " << msg.dest << "\n";

@@ -12,7 +12,9 @@ PE::PE(int id, int qos, const std::vector<SMS>& instructions)
 // Funcion que ejecuta las instrucciones de la PE
 void PE::run(std::function<bool(const SMS&)> send_to_interconnect) {
     send_callback = send_to_interconnect;
-    while (current_instruction_index < instruction_list.size()) {
+
+    while (current_instruction_index < instruction_list.size() || awaiting_response) {
+
         if (!awaiting_response) {
 
             const SMS& instr = instruction_list[current_instruction_index];
@@ -37,9 +39,16 @@ void PE::receiveResponse(const SMS& response) {
     if (response.dest != id) return;  // Ignorar si no es para este PE
 
     switch (response.type) {
-        case MessageType::READ_RESP:
-        case MessageType::WRITE_RESP:
-        case MessageType::INV_COMPLETE: {
+        case MessageType::READ_RESP: { 
+            std::cout << "[PE" << id << "] READ_RESP recibida.\n";
+            awaiting_response = false;
+            break;
+        }
+        case MessageType::WRITE_RESP:{
+            std::cout << "[PE" << id << "] WRITE_RESP recibida.\n";
+            awaiting_response = false;
+            break;
+        }case MessageType::INV_COMPLETE: {
             awaiting_response = false;
             break;
         }
@@ -64,8 +73,6 @@ void PE::receiveResponse(const SMS& response) {
         }
     }
 }
-
-
 
 // Funcion que devuelve el id de la PE
 int PE::getId() const {

@@ -19,7 +19,7 @@ int main() {
 
     // Crear memoria y arrancarla
     Memory memory([&interconnect](const SMS& resp) {
-        std::cout << "[MEMORY] Respuesta generada para el PE" << resp.dest <<  "enviando al Interconnect " "\n";
+        std::cout << "[MEMORY] Respuesta generada para el PE" << resp.dest <<  " enviando al Interconnect \n";
         interconnect.receiveMessage(resp);
 
     });
@@ -57,9 +57,12 @@ int main() {
         t.join();
     }
 
+    pes.clear();  // Limpiar el vector de PEs
+
     interconnect.stop();
 
     memory.stop();
 
+    
     return 0;
 }
