@@ -12,6 +12,7 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <optional>
 
 class Interconnect {
 public:
@@ -34,10 +35,22 @@ private:
         std::chrono::steady_clock::time_point ready_time;
     };
 
+    struct InvalidationState {
+        int origin_id;                  // PE que generó el broadcast
+        int expected_acks;              // Cantidad total esperada (n - 1)
+        int received_acks = 0;          // Contador
+        MessageType waiting_type;      // Solo BROADCAST_INVALIDATE por ahora
+        SMS original_msg;              // Para recuperar datos de qos o line
+    };
+    
+
     Memory* memory = nullptr;
     std::queue<SMS> message_queue;
     std::vector<PendingMessage> pending;
     std::unordered_map<int, PE*> pe_registry;
+    std::queue<SMS> invalidation_queue;   // Cola para mensajes INV_ACK
+    std::optional<InvalidationState> current_invalidation;
+
 
 
     std::mutex queue_mutex;

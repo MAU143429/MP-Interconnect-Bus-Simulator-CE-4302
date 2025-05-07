@@ -28,6 +28,8 @@ private:
     std::vector<SMS> instruction_list;
     std::atomic<bool> awaiting_response;
     size_t current_instruction_index;
+    std::function<bool(const SMS&)> send_callback;
+
 };
 
 #endif

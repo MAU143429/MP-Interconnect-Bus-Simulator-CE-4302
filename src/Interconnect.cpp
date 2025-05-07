@@ -9,15 +9,22 @@ Interconnect::~Interconnect() {
     stop();
 }
 
+
 bool Interconnect::receiveMessage(const SMS& msg) {
-    {
-        std::lock_guard<std::mutex> lock(queue_mutex);
+    std::lock_guard<std::mutex> lock(queue_mutex);
+
+    if (msg.type == MessageType::INV_ACK) {
+        invalidation_queue.push(msg);
+        std::cout << "[INTERCONNECT] INV_ACK recibido, encolado en invalidation_queue.\n";
+    } else {
         message_queue.push(msg);
         std::cout << "[INTERCONNECT] Mensaje recibido de PE" << msg.src << " esperando a ser procesado...\n";
     }
+
     cv.notify_one();
     return true;
 }
+
 
 void Interconnect::start() {
     running = true;
@@ -54,7 +61,65 @@ void Interconnect::processQueue() {
         message_queue.pop();
         lock.unlock();
 
-        // Calcular tiempo de transferencia simulado
+        // Si es BROADCAST_INVALIDATE, manejar toda la lógica especial
+        if (msg.type == MessageType::BROADCAST_INVALIDATE) {
+            std::cout << "[INTERCONNECT] Procesando BROADCAST_INVALIDATE de PE" << msg.src << " con delay de 2s\n";
+
+            std::this_thread::sleep_for(std::chrono::seconds(2));  // Simular delay global
+
+            current_invalidation = InvalidationState{
+                .origin_id = msg.src,
+                .expected_acks = static_cast<int>(pe_registry.size()) - 1,
+                .received_acks = 0,
+                .waiting_type = msg.type,
+                .original_msg = msg
+            };
+
+            // Enviar réplicas a todos los demás PE
+            for (const auto& [id, pe] : pe_registry) {
+                if (id != msg.src) {
+                    SMS replica = msg;
+                    replica.dest = id;
+                    pe->receiveResponse(replica);
+                }
+            }
+
+            std::cout << "[INTERCONNECT] Réplicas enviadas. Esperando INV_ACKs...\n";
+
+            // Esperar y procesar los INV_ACK con delay de 0.2s cada uno
+            while (current_invalidation->received_acks < current_invalidation->expected_acks) {
+                while (invalidation_queue.empty()) {
+                    std::this_thread::yield();
+                }
+
+                SMS ack_msg = invalidation_queue.front();
+                invalidation_queue.pop();
+
+                std::cout << "[INTERCONNECT] Procesando INV_ACK de PE" << ack_msg.src << " (delay 0.2s)\n";
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+                current_invalidation->received_acks++;
+            }
+
+            // Enviar INV_COMPLETE al PE que originó el broadcast
+            std::cout << "[INTERCONNECT] Todos los INV_ACK recibidos. Enviando INV_COMPLETE al PE" << current_invalidation->origin_id << "\n";
+
+            SMS complete_msg;
+            complete_msg.type = MessageType::INV_COMPLETE;
+            complete_msg.dest = current_invalidation->origin_id;
+            complete_msg.qos = current_invalidation->original_msg.qos;
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+            if (auto it = pe_registry.find(complete_msg.dest); it != pe_registry.end()) {
+                it->second->receiveResponse(complete_msg);
+            }
+
+            current_invalidation.reset();
+            continue;  // Pasar al siguiente ciclo sin procesar más
+        }
+
+        // Procesamiento normal para otros mensajes
         double delay_secs = 2.0;
         if (msg.type == MessageType::WRITE_MEM) {
             delay_secs += msg.num_of_cache_lines * 16 * 0.1;
@@ -67,14 +132,12 @@ void Interconnect::processQueue() {
         std::cout << "[INTERCONNECT] Procesando mensaje de PE" << msg.src
                   << " con delay de " << delay_secs << "s\n";
 
-        // Simular espera sin bloquear CPU
         auto ready_time = std::chrono::steady_clock::now() + std::chrono::duration<double>(delay_secs);
         while (std::chrono::steady_clock::now() < ready_time) {
             std::this_thread::yield();
         }
 
         if (msg.type == MessageType::READ_RESP || msg.type == MessageType::WRITE_RESP) {
-            // Es una respuesta para un PE
             auto it = pe_registry.find(msg.dest);
             if (it != pe_registry.end()) {
                 std::cout << "[INTERCONNECT] Enviando respuesta al PE" << msg.dest << "\n";
@@ -83,12 +146,11 @@ void Interconnect::processQueue() {
                 std::cerr << "[INTERCONNECT] PE destino no registrado: " << msg.dest << "\n";
             }
         } else if (memory) {
-            std::cout << "[INTERCONNECT] Mensaje del PE " << msg.src  << " procesado... Enviando mensaje a memoria \n";
+            std::cout << "[INTERCONNECT] Mensaje del PE " << msg.src << " procesado... Enviando mensaje a memoria \n";
             memory->receive(msg);
         } else {
             std::cerr << "[INTERCONNECT] Error: memoria no conectada\n";
         }
-        
     }
 
     std::cout << "[INTERCONNECT] Finalizó procesamiento de mensajes.\n";

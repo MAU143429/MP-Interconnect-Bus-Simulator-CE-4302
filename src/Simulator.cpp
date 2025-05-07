@@ -36,6 +36,7 @@ int main() {
     
         int qos_dummy = 0;
         auto pe = std::make_unique<PE>(pe_id, qos_dummy, instrs);
+
     
         interconnect.registerPE(pe_id, pe.get());
 
