@@ -17,6 +17,10 @@ int main() {
     // Crear e iniciar Interconnect
     Interconnect interconnect;
 
+
+    interconnect.setSchedulingMode(false); // false = usar modo QoS
+
+
     // Crear memoria y arrancarla
     Memory memory([&interconnect](const SMS& resp) {
         std::cout << "[MEMORY] Respuesta generada para el PE" << resp.dest <<  " enviando al Interconnect \n";

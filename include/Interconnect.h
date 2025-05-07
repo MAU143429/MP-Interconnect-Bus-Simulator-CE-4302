@@ -20,6 +20,8 @@ public:
     ~Interconnect();
 
     bool receiveMessage(const SMS& msg); // Llamado por los PE
+    void setSchedulingMode(bool fifo); // true = FIFO, false = QoS
+
     
     void setMemory(class Memory* mem);
     void start();
@@ -45,9 +47,11 @@ private:
         SMS original_msg;              // Para recuperar datos de qos o line
     };
     
-
+    bool fifo_mode = true; // true = FIFO, false = QoS-based
     Memory* memory = nullptr;
-    std::queue<SMS> message_queue;
+    //std::queue<SMS> message_queue;
+    std::deque<SMS> message_queue;
+
     std::vector<PendingMessage> pending;
     std::unordered_map<int, PE*> pe_registry;
     std::queue<SMS> invalidation_queue;   // Cola para mensajes INV_ACK

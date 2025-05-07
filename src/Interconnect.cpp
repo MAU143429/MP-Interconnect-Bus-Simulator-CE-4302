@@ -17,7 +17,7 @@ bool Interconnect::receiveMessage(const SMS& msg) {
         invalidation_queue.push(msg);
         std::cout << "[INTERCONNECT] INV_ACK recibido, encolado en invalidation_queue.\n";
     } else {
-        message_queue.push(msg);
+        message_queue.push_back(msg);
 
         if (msg.type == MessageType::WRITE_RESP || msg.type == MessageType::READ_RESP){
             std::cout << "[INTERCONNECT] Mensaje recibido de [MEMORY] para PE" << msg.dest << " esperando a ser procesado...\n";
@@ -53,6 +53,10 @@ void Interconnect::registerPE(int id, PE* pe) {
     pe_registry[id] = pe;
 }
 
+void Interconnect::setSchedulingMode(bool fifo) {
+    fifo_mode = fifo;
+}
+
 
 void Interconnect::wait_until(std::chrono::steady_clock::time_point ready_time) {
     while (std::chrono::steady_clock::now() < ready_time) {
@@ -76,8 +80,21 @@ void Interconnect::processQueue() {
             continue;
         }
 
-        SMS msg = message_queue.front();
-        message_queue.pop();
+        SMS msg;
+        if (fifo_mode) {
+            msg = message_queue.front();
+            message_queue.pop_front();
+        } else {
+            auto best_it = message_queue.begin();
+            for (auto it = message_queue.begin(); it != message_queue.end(); ++it) {
+                if (it->qos > best_it->qos) {
+                    best_it = it;
+                }
+            }
+            msg = *best_it;
+            message_queue.erase(best_it);
+        }
+
         lock.unlock();
 
         // Si es BROADCAST_INVALIDATE, manejar toda la lógica especial
