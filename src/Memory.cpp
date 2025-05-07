@@ -1,18 +1,22 @@
 #include "../include/Memory.h"
 #include <iostream>
 
+// Constructor de la clase Memory
 Memory::Memory(std::function<void(const SMS&)> response_callback)
     : send_response(std::move(response_callback)), running(false) {}
 
+// Destructor de la clase Memory
 Memory::~Memory() {
     stop();
 }
 
+// Inicia el hilo de gestión de operaciones
 void Memory::start() {
     running = true;
     manager = std::thread(&Memory::managerThread, this);
 }
 
+// Detiene el hilo de gestión de operaciones
 void Memory::stop() {
     {
         std::unique_lock<std::mutex> lock(mutex_);
@@ -24,7 +28,7 @@ void Memory::stop() {
         manager.join();
 }
 
-
+// Recibe un mensaje de una PE y lo coloca en la cola de entrada
 void Memory::receive(const SMS& msg) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -34,11 +38,13 @@ void Memory::receive(const SMS& msg) {
     cv.notify_one();
 }
 
+// Establece el callback para enviar respuestas despues de procesar la solicitud del PE
 void Memory::setResponseCallback(std::function<void(const SMS&)> cb) {
     send_response = std::move(cb);
 }
 
-
+// Hilo de gestión de operaciones
+// Este hilo se encarga de procesar las solicitudes de memoria y enviar respuestas
 void Memory::managerThread() {
     using namespace std::chrono;
 
@@ -52,7 +58,7 @@ void Memory::managerThread() {
             break;
 
 
-        // Mover a activos si hay espacio
+        // Mover a activos si hay espacio maximo 4 operaciones al mismo tiempo (quad channel)
         while (!incoming_queue.empty() && active_operations.size() < 4) {
             SMS msg = incoming_queue.front();
             incoming_queue.pop();
@@ -76,7 +82,7 @@ void Memory::managerThread() {
             active_operations.push_back(op);
         }
 
-        // Verificar operaciones listas
+        // Verificar si hay operaciones activas que han terminado
         auto now = steady_clock::now();
         auto it = active_operations.begin();
         while (it != active_operations.end()) {
@@ -85,8 +91,8 @@ void Memory::managerThread() {
 
                 SMS resp(msg.type == MessageType::READ_MEM ? MessageType::READ_RESP : MessageType::WRITE_RESP);
                 resp.dest = msg.src;
-                resp.status = 1; // dummy
-                resp.data = {42}; // dummy
+                resp.status = 1; 
+                resp.data = {42}; 
 
                 std::cout << "[MEMORY] Termino solicitud de PE" << msg.src << ", generando respuesta...\n";
                 send_response(resp);

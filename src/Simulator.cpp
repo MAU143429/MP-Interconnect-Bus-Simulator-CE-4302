@@ -9,7 +9,7 @@
 #include <thread>
 
 int main() {
-    
+    // Inicializar el número de PEs y crear los vectores para almacenar PEs y sus hilos
     const int NUM_PE = 10;
     std::vector<std::unique_ptr<PE>> pes;
     std::vector<std::thread> pe_threads;
