@@ -26,7 +26,7 @@ int main() {
     memory.start();
 
     
-    interconnect.setMemory(&memory);  // Conectar memoria
+    interconnect.setMemory(&memory); 
     interconnect.start();
 
     // Cargar instrucciones y crear PEs

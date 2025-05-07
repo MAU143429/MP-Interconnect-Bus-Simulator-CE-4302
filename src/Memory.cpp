@@ -59,8 +59,6 @@ void Memory::managerThread() {
             is_idle = true;
             break;
         }
-            
-
 
         // Mover a activos si hay espacio maximo 4 operaciones al mismo tiempo (quad channel)
         while (!incoming_queue.empty() && active_operations.size() < 4) {

@@ -20,6 +20,7 @@ public:
     ~Interconnect();
 
     bool receiveMessage(const SMS& msg); // Llamado por los PE
+    
     void setMemory(class Memory* mem);
     void start();
     void stop();
@@ -29,6 +30,7 @@ public:
 
 private:
     void processQueue(); // Función del hilo
+    void wait_until(std::chrono::steady_clock::time_point ready_time); 
 
     struct PendingMessage {
         SMS msg;

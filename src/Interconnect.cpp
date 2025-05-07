@@ -54,6 +54,14 @@ void Interconnect::registerPE(int id, PE* pe) {
 }
 
 
+void Interconnect::wait_until(std::chrono::steady_clock::time_point ready_time) {
+    while (std::chrono::steady_clock::now() < ready_time) {
+        std::this_thread::yield();
+    }
+}
+
+
+
 void Interconnect::processQueue() {
     while (running || !message_queue.empty() || (memory && !memory->isIdle())) {
         std::unique_lock<std::mutex> lock(queue_mutex);
@@ -76,7 +84,7 @@ void Interconnect::processQueue() {
         if (msg.type == MessageType::BROADCAST_INVALIDATE) {
             std::cout << "[INTERCONNECT] Procesando BROADCAST_INVALIDATE de PE" << msg.src << " con delay de 2s \n";
 
-            std::this_thread::sleep_for(std::chrono::seconds(2));  // Simular delay global
+            wait_until(std::chrono::steady_clock::now() + std::chrono::seconds(2));
 
             current_invalidation = InvalidationState{
                 .origin_id = msg.src,
@@ -107,7 +115,8 @@ void Interconnect::processQueue() {
                 invalidation_queue.pop();
 
                 std::cout << "[INTERCONNECT] Procesando INV_ACK de PE" << ack_msg.src << " (delay 0.2s)\n";
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(200));
+
 
                 current_invalidation->received_acks++;
             }
@@ -120,7 +129,8 @@ void Interconnect::processQueue() {
             complete_msg.dest = current_invalidation->origin_id;
             complete_msg.qos = current_invalidation->original_msg.qos;
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(200));
+
 
             if (auto it = pe_registry.find(complete_msg.dest); it != pe_registry.end()) {
                 it->second->receiveResponse(complete_msg);
