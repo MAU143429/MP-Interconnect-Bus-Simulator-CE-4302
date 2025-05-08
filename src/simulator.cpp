@@ -1,7 +1,7 @@
 #include "../include/PE.h"
-#include "../include/SMS.h"
-#include "../include/Memory.h"
-#include "../include/Parser.h"
+#include "../include/sms.h"
+#include "../include/memory.h"
+#include "../include/parser.h"
 #include "../include/GlobalClock.h"
 #include <iostream>
 #include <vector>
