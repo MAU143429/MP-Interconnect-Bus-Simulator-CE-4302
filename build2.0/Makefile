@@ -15,7 +15,9 @@ OBJS = $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SRC_FILES))
 
 # Compilador y flags
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -I$(INC_DIR)
+#CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -I$(INC_DIR)
+CXXFLAGS = -std=c++20 -w -O2 -I$(INC_DIR)
+
 
 # Regla principal
 all: $(TARGET)

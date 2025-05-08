@@ -90,7 +90,7 @@ void generateCSVReports(const Interconnect& interconnect, const std::vector<std:
 // Esta función inicializa el sistema, carga las instrucciones de los PEs,
 // crea los objetos necesarios y lanza los hilos para cada PE.
 // También maneja la interacción con el usuario para el modo stepping y genera los reportes al final.
-int main() {
+int main2() {
 
     // Inicializar el número de PEs y crear los vectores para almacenar PEs y sus hilos
     const int NUM_PE = 10;

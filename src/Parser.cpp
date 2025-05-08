@@ -22,7 +22,7 @@ static int hexToDecimal(const std::string& hexStr) {
 }
 
 // Función para convertir una linea de texto a objetos SMS
-static SMS parseInstructionToSMS(const std::string& line) {
+static SMS parseInstructionToSMS(const std::string& line, int QoS) {
 
     // Eliminar espacios en blanco al principio y al final de la línea
     std::istringstream iss(line);
@@ -70,7 +70,7 @@ static SMS parseInstructionToSMS(const std::string& line) {
                 sms.addr = args[1];
                 sms.num_of_cache_lines = args[2];
                 sms.start_cache_line = args[3];
-                sms.qos = args[4];
+                sms.qos = QoS;
             }
             break;
         case MessageType::READ_MEM:
@@ -78,40 +78,40 @@ static SMS parseInstructionToSMS(const std::string& line) {
                 sms.src = args[0];
                 sms.addr = args[1];
                 sms.size = args[2];
-                sms.qos = args[3];
+                sms.qos = QoS;
             }
             break;
         case MessageType::BROADCAST_INVALIDATE:
             if (args.size() >= 3) {
                 sms.src = args[0];
                 sms.inv_cache_line = args[1];
-                sms.qos = args[2];
+                sms.qos = QoS;
             }
             break;
         case MessageType::INV_ACK:
             if (args.size() >= 2) {
                 sms.src = args[0];
-                sms.qos = args[1];
+                sms.qos = QoS;
             }
             break;
         case MessageType::INV_COMPLETE:
             if (args.size() >= 2) {
                 sms.dest = args[0];
-                sms.qos = args[1];
+                sms.qos = QoS;
             }
             break;
         case MessageType::READ_RESP:
             if (args.size() >= 3) {
                 sms.dest = args[0];
                 sms.data.push_back(args[1]);
-                sms.qos = args[2];
+                sms.qos = QoS;
             }
             break;
         case MessageType::WRITE_RESP:
             if (args.size() >= 3) {
                 sms.dest = args[0];
                 sms.status = args[1];
-                sms.qos = args[2];
+                sms.qos = QoS;
             }
             break;
     }
@@ -120,7 +120,7 @@ static SMS parseInstructionToSMS(const std::string& line) {
 }
 
 // Función para leer las instrucciones desde un archivo y convertirlas en objetos SMS
-std::vector<SMS> parseInstructionsFromFile(const std::string& filename) {
+std::vector<SMS> parseInstructionsFromFile(const std::string& filename, int QoS) {
     std::ifstream file(filename);
     std::vector<SMS> messages;
     if (!file.is_open()) {
@@ -132,7 +132,7 @@ std::vector<SMS> parseInstructionsFromFile(const std::string& filename) {
     
     while (std::getline(file, line)) {
         if (line.empty() || line.rfind("PE", 0) == 0) continue;
-        messages.push_back(parseInstructionToSMS(line));
+        messages.push_back(parseInstructionToSMS(line, QoS));
     }
 
     file.close();
