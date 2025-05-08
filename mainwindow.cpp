@@ -5,6 +5,7 @@
 #include "include/Interconnect.h"
 #include "include/Memory.h"
 #include "ui_mainwindow.h"
+#include <QtConcurrent>
 
 #include <iostream>
 #include <memory>
@@ -43,12 +44,18 @@ QVector<int> MainWindow::getPEPriorities() const {
 void MainWindow::on_pushButton_clicked()
 {
     QVector<int> priorities = this->getPEPriorities();
+    ui->pages->setCurrentIndex(1);
+    QString dir = QFileDialog::getExistingDirectory(this, "Seleccione directorio del Workload");
+    if (dir.isEmpty())
+        return;
 
-    this->start_simulation(priorities);
+    QFuture<void> future = QtConcurrent::run([=]() {
+        this->start_simulation(priorities, dir);
+    });
 }
 
-int MainWindow::start_simulation( QVector<int> priorities){
-    QString dir = QFileDialog::getExistingDirectory(nullptr, "Seleccione directorio del Workload");
+int MainWindow::start_simulation( QVector<int> priorities,QString dir){
+
     qDebug() << "Priorities:" << priorities;
     const int NUM_PE = 10;
     std::vector<std::unique_ptr<PE>> pes;

@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/new/imgs">
+        <file>img/broadcast_inv.png</file>
+        <file>img/GRAPHICpng.png</file>
+        <file>img/inv_ack.png</file>
+        <file>img/inv_complete.png</file>
+        <file>img/read_mem.png</file>
+        <file>img/read_resp.png</file>
+        <file>img/write_mem.png</file>
+        <file>img/write_resp.png</file>
+    </qresource>
+</RCC>

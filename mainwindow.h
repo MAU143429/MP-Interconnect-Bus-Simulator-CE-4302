@@ -17,7 +17,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
      QVector<int> getPEPriorities() const;
-     int start_simulation( QVector<int> priorities);
+     int start_simulation( QVector<int> priorities,QString dir);
 
 
 private:
