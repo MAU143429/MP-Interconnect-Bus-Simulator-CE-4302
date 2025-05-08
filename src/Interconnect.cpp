@@ -3,7 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <numeric>
-
+#include "../mainwindow.h"
 
 // Instancia el recollector de estadísticas
 InterconnectStats icstats;
@@ -18,7 +18,7 @@ Interconnect::~Interconnect() {
 
 // Método para recibir mensajes de las PEs
 bool Interconnect::receiveMessage(const SMS& msg) {
-
+    //mainwindow->appendMessage(mensaje)
     std::lock_guard<std::mutex> lock(queue_mutex);
     if (msg.type == MessageType::INV_ACK) {
         invalidation_queue.push(msg);

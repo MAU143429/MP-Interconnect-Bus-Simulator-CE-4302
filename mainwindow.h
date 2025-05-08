@@ -23,7 +23,7 @@ public:
      void generatePECSVReport(const std::vector<std::unique_ptr<PE>>& pes);
      const char* messageTypeToString(MessageType type);
      void generateCSVReports(const Interconnect& interconnect, const std::vector<std::unique_ptr<PE>>& pes);
-
+     void appendMessage(QString message);
 
 private:
     Ui::MainWindow *ui;

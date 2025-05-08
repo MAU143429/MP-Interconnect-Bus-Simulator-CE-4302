@@ -41,6 +41,9 @@ QVector<int> MainWindow::getPEPriorities() const {
         ui->PE10_prty->value()
     };
 }
+void  MainWindow::appendMessage(QString message){
+    ui->logBox->append(message);
+}
 
 void MainWindow::on_pushButton_clicked()
 {
@@ -152,7 +155,7 @@ int MainWindow::start_simulation( QVector<int> priorities,QString dir){
 
 
     // Se establece el modo de programación FIFO o QoS y se elige el modo ejecución
-    interconnect.setSchedulingMode(false); // false = usar modo QoS
+    interconnect.setSchedulingMode(ui->FIFO_btn->isChecked()); // false = usar modo QoS
     interconnect.setSteppingMode(false);  // Activa el modo stepping
 
     // Establecer los tiempos de penalización en milisegundos
