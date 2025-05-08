@@ -44,6 +44,13 @@ void Memory::setResponseCallback(std::function<void(const SMS&)> cb) {
     send_response = std::move(cb);
 }
 
+
+// Modifica el valor de PENALTY_TIMER
+void Memory::setPenaltyTimers(double new_penalty_timer, double new_penalty_bytes) {
+    PENALTY_TIMER = new_penalty_timer;
+    PENALTY_BYTES = new_penalty_bytes;
+}
+
 // Hilo de gestión de operaciones
 // Este hilo se encarga de procesar las solicitudes de memoria y enviar respuestas
 void Memory::managerThread() {
@@ -67,9 +74,9 @@ void Memory::managerThread() {
 
             double delay_secs = 0;
             if (msg.type == MessageType::WRITE_MEM)
-                delay_secs = msg.num_of_cache_lines * 16 * 0.2;
+                delay_secs = PENALTY_TIMER + ( msg.num_of_cache_lines * 16 * PENALTY_BYTES );
             else if (msg.type == MessageType::READ_MEM)
-                delay_secs = msg.size * 0.2;
+                delay_secs = PENALTY_TIMER + msg.size * PENALTY_BYTES;
 
             auto now = steady_clock::now();
             auto delay = duration_cast<steady_clock::duration>(duration<double>(delay_secs));
@@ -94,7 +101,8 @@ void Memory::managerThread() {
                 SMS resp(msg.type == MessageType::READ_MEM ? MessageType::READ_RESP : MessageType::WRITE_RESP);
                 resp.dest = msg.src;
                 resp.status = 1; 
-                resp.data = {42}; 
+                resp.data = {}; 
+                resp.size = msg.size;
 
                 std::cout << "[MEMORY] Termino solicitud de PE" << msg.src << ", generando respuesta...\n";
                 send_response(resp);

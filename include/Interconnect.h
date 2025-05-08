@@ -14,6 +14,8 @@
 #include <functional>
 #include <optional>
 
+constexpr int CACHE_WIDTH = 16; // Tamaño de la línea de caché en bytes
+
 class Interconnect {
 public:
     Interconnect();
@@ -21,6 +23,9 @@ public:
 
     bool receiveMessage(const SMS& msg); // Llamado por los PE
     void setSchedulingMode(bool fifo); // true = FIFO, false = QoS
+
+
+    void setPenaltyTimers(double new_penalty_timer, double new_penalty_bytes);
 
     
     void setMemory(class Memory* mem);
@@ -49,7 +54,11 @@ private:
     
     bool fifo_mode = true; // true = FIFO, false = QoS-based
     Memory* memory = nullptr;
-    //std::queue<SMS> message_queue;
+    
+
+    int PENALTY_TIMER = 200;
+    int PENALTY_BYTES= 100;
+
     std::deque<SMS> message_queue;
 
     std::vector<PendingMessage> pending;

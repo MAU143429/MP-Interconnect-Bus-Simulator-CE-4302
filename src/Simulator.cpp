@@ -11,6 +11,7 @@
 int main() {
     // Inicializar el número de PEs y crear los vectores para almacenar PEs y sus hilos
     const int NUM_PE = 10;
+    const int BYTE_PENALTY = 100; // Penalización en bytes en milisegundos
     std::vector<std::unique_ptr<PE>> pes;
     std::vector<std::thread> pe_threads;
 
@@ -20,6 +21,8 @@ int main() {
 
     interconnect.setSchedulingMode(false); // false = usar modo QoS
 
+    interconnect.setPenaltyTimers(200, BYTE_PENALTY); // Establecer los tiempos de penalización en milisegundos
+    //                           base, penalidad en milisegundos                             
 
     // Crear memoria y arrancarla
     Memory memory([&interconnect](const SMS& resp) {
@@ -27,7 +30,9 @@ int main() {
         interconnect.receiveMessage(resp);
 
     });
-    
+
+    memory.setPenaltyTimers(1,(BYTE_PENALTY/1000)); // Establecer los tiempos de penalización en memoria en segundos 
+    //                      base, penalidad en segundos
     memory.start();
 
     
@@ -36,7 +41,7 @@ int main() {
 
     // Cargar instrucciones y crear PEs
     for (int pe_id = 1; pe_id <= NUM_PE; ++pe_id) {
-        std::string filename = "data/Workload_1/PE" + std::to_string(pe_id) + ".txt";
+        std::string filename = "data/Workload_2/PE" + std::to_string(pe_id) + ".txt";
         std::vector<SMS> instrs = parseInstructionsFromFile(filename);
     
         int qos_dummy = 0;

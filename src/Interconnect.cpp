@@ -64,6 +64,11 @@ void Interconnect::wait_until(std::chrono::steady_clock::time_point ready_time) 
     }
 }
 
+// Modifica el valor de PENALTY_TIMER
+void Interconnect::setPenaltyTimers(double new_penalty_timer, double new_penalty_bytes) {
+    PENALTY_TIMER = new_penalty_timer;
+    PENALTY_BYTES = new_penalty_bytes;
+}
 
 
 void Interconnect::processQueue() {
@@ -99,9 +104,9 @@ void Interconnect::processQueue() {
 
         // Si es BROADCAST_INVALIDATE, manejar toda la lógica especial
         if (msg.type == MessageType::BROADCAST_INVALIDATE) {
-            std::cout << "[INTERCONNECT] Procesando BROADCAST_INVALIDATE de PE" << msg.src << " con delay de 2s \n";
+            std::cout << "[INTERCONNECT] Procesando BROADCAST_INVALIDATE de PE" << msg.src << " con delay de 0,1s \n";
 
-            wait_until(std::chrono::steady_clock::now() + std::chrono::seconds(2));
+            wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(PENALTY_BYTES));
 
             current_invalidation = InvalidationState{
                 .origin_id = msg.src,
@@ -131,8 +136,8 @@ void Interconnect::processQueue() {
                 SMS ack_msg = invalidation_queue.front();
                 invalidation_queue.pop();
 
-                std::cout << "[INTERCONNECT] Procesando INV_ACK de PE" << ack_msg.src << " (delay 0.2s)\n";
-                wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(200));
+                std::cout << "[INTERCONNECT] Procesando INV_ACK de PE" << ack_msg.src << " (delay 0.1s)\n";
+                wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(PENALTY_BYTES));
 
 
                 current_invalidation->received_acks++;
@@ -146,7 +151,7 @@ void Interconnect::processQueue() {
             complete_msg.dest = current_invalidation->origin_id;
             complete_msg.qos = current_invalidation->original_msg.qos;
 
-            wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(200));
+            wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(PENALTY_TIMER));
 
 
             if (auto it = pe_registry.find(complete_msg.dest); it != pe_registry.end()) {
@@ -158,13 +163,13 @@ void Interconnect::processQueue() {
         }
 
         // Procesamiento normal para otros mensajes
-        double delay_secs = 2.0;
+        double delay_secs = PENALTY_TIMER/1000;
         if (msg.type == MessageType::WRITE_MEM) {
-            delay_secs += msg.num_of_cache_lines * 16 * 0.1;
+            delay_secs += msg.num_of_cache_lines * CACHE_WIDTH * (PENALTY_BYTES/1000);
         } else if (msg.type == MessageType::READ_RESP) {
-            delay_secs += msg.data.size() * 0.1;
+            delay_secs += msg.data.size() * (PENALTY_BYTES/1000);
         } else if (msg.type == MessageType::READ_MEM || msg.type == MessageType::WRITE_RESP) {
-            delay_secs += msg.size * 0.1;
+            delay_secs += msg.size * (PENALTY_BYTES/1000);
         }
 
         if (msg.type == MessageType::WRITE_RESP || msg.type == MessageType::READ_RESP){
