@@ -5,6 +5,7 @@
 #include <iostream>
 #include <chrono>
 
+// Definición de los tipos de mensajes
 enum class MessageType {
     WRITE_MEM,
     READ_MEM,
@@ -15,6 +16,7 @@ enum class MessageType {
     WRITE_RESP
 };
 
+// Estructura para almacenar estadísticas de mensajes
 struct MessageStats {
     size_t size_bytes;
     std::chrono::steady_clock::time_point start_time;
@@ -23,6 +25,8 @@ struct MessageStats {
 
 class SMS {
 public:
+
+    // Atributos del mensaje
     MessageType type;
     int src;                 // PE que envía el mensaje
     int addr;                // Dirección de memoria
@@ -39,7 +43,10 @@ public:
     SMS(MessageType t);      // Constructor con tipo de mensaje
     SMS();                   // constructor vacio
 
+    // Metodo para imprimir la información del mensaje
     void printInfo() const;
+
+    // Método para calcular el tamaño del mensaje en bytes
     size_t calculateSize() const;
 };
 

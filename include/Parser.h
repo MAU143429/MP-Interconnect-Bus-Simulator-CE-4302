@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 
+// Función para convertir las instrucciones de un archivo a objetos SMS
 std::vector<SMS> parseInstructionsFromFile(const std::string& filename);
 
 #endif

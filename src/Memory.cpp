@@ -57,27 +57,35 @@ void Memory::managerThread() {
     using namespace std::chrono; 
 
     while (true) {
+
+        // Esperar hasta que haya mensajes en la cola de entrada o que haya operaciones activas
         std::unique_lock<std::mutex> lock(mutex_);
         cv.wait_for(lock, std::chrono::milliseconds(10), [&] {
             return !incoming_queue.empty() || !active_operations.empty() || !running;
         });
 
+        // Si no hay más mensajes, no esta en running y no hay operaciones activas, salir del bucle
         if (!running && incoming_queue.empty() && active_operations.empty()){
             is_idle = true;
             break;
         }
 
         // Mover a activos si hay espacio maximo 4 operaciones al mismo tiempo (quad channel)
-        while (!incoming_queue.empty() && active_operations.size() < 4) {
+
+        while (!incoming_queue.empty() && active_operations.size() < MAX_CONCURRENT_MESSAGES) {
+            
+            // Tomar el mensaje de la cola de entrada
             SMS msg = incoming_queue.front();
             incoming_queue.pop();
 
+            // Calculo del tiempo de espera para la operación
             double delay_secs = 0;
             if (msg.type == MessageType::WRITE_MEM)
-                delay_secs = PENALTY_TIMER + ( msg.num_of_cache_lines * 16 * PENALTY_BYTES );
+                delay_secs = PENALTY_TIMER + ( msg.num_of_cache_lines * CACHE_WORD_WIDTH * PENALTY_BYTES );
             else if (msg.type == MessageType::READ_MEM)
                 delay_secs = PENALTY_TIMER + msg.size * PENALTY_BYTES;
 
+            // Calcular el tiempo de finalización de la operación
             auto now = steady_clock::now();
             auto delay = duration_cast<steady_clock::duration>(duration<double>(delay_secs));
             auto ready_time = now + delay;
@@ -85,6 +93,8 @@ void Memory::managerThread() {
             std::cout << "[MEMORY] Iniciando operacion de PE" << msg.src
                       << " duracion esperada: delay-> " << delay_secs << "secs\n";
 
+
+            // Agregar la operación a la lista de operaciones activas
             ActiveOperation op;
             op.msg = msg;
             op.ready_time = ready_time;
@@ -95,6 +105,8 @@ void Memory::managerThread() {
         auto now = steady_clock::now();
         auto it = active_operations.begin();
         while (it != active_operations.end()) {
+
+            // Si la operación ha terminado, enviar respuesta
             if (now >= it->ready_time) {
                 SMS& msg = it->msg;
 
@@ -113,6 +125,7 @@ void Memory::managerThread() {
             }
         }
 
+        // Si no hay más mensajes en la cola de entrada y no hay operaciones activas, marcar como inactiva
         is_idle = incoming_queue.empty() && active_operations.empty();
 
     }

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdint>
 
+// Tipos de mensajes comparando con el enum class MessageType
 static std::unordered_map<std::string, MessageType> opcodeMap = {
     {"WRITE_MEM", MessageType::WRITE_MEM},
     {"READ_MEM", MessageType::READ_MEM},
@@ -15,26 +16,33 @@ static std::unordered_map<std::string, MessageType> opcodeMap = {
     {"WRITE_RESP", MessageType::WRITE_RESP}
 };
 
+// Función para convertir una cadena hexadecimal a decimal
 static int hexToDecimal(const std::string& hexStr) {
     return std::stoul(hexStr, nullptr, 16);
 }
 
+// Función para convertir una linea de texto a objetos SMS
 static SMS parseInstructionToSMS(const std::string& line) {
+
+    // Eliminar espacios en blanco al principio y al final de la línea
     std::istringstream iss(line);
     std::string opcodeStr;
     iss >> opcodeStr;
 
+    // Verificar el tipo de mensaje
     if (opcodeMap.find(opcodeStr) == opcodeMap.end()) {
         std::cerr << "Instrucción desconocida: " << opcodeStr << std::endl;
         exit(1);
     }
 
+    // Crear un objeto SMS y asignar el tipo de mensaje
     MessageType type = opcodeMap[opcodeStr];
     SMS sms(type);
 
     std::string arg;
     std::vector<int> args;
 
+    // Leer los argumentos de la línea
     while (iss >> arg) {
         if (!arg.empty() && arg.back() == ',') {
             arg.pop_back();
@@ -54,6 +62,7 @@ static SMS parseInstructionToSMS(const std::string& line) {
         }
     }
 
+    // Asignar los argumentos a los atributos del mensaje según el tipo
     switch (type) {
         case MessageType::WRITE_MEM:
             if (args.size() >= 5) {
@@ -110,6 +119,7 @@ static SMS parseInstructionToSMS(const std::string& line) {
     return sms;
 }
 
+// Función para leer las instrucciones desde un archivo y convertirlas en objetos SMS
 std::vector<SMS> parseInstructionsFromFile(const std::string& filename) {
     std::ifstream file(filename);
     std::vector<SMS> messages;

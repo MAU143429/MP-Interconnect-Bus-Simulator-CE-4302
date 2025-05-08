@@ -9,6 +9,7 @@
 #include <thread>
 #include <fstream>
 
+// Función para convertir el tipo de mensaje a una cadena
 const char* messageTypeToString(MessageType type) {
     switch(type) {
         case MessageType::WRITE_MEM: return "WRITE_MEM";
@@ -22,6 +23,7 @@ const char* messageTypeToString(MessageType type) {
     }
 }
 
+// Función para generar el reporte CSV de los PEs
 void generatePECSVReport(const std::vector<std::unique_ptr<PE>>& pes) {
     std::ofstream csv_file("pe_stats.csv");
     
@@ -49,6 +51,7 @@ void generatePECSVReport(const std::vector<std::unique_ptr<PE>>& pes) {
     std::cout << "[SIMULATOR] Reporte CSV generado: pe_stats.csv\n";
 }
 
+// Función para generar los reportes CSV del Interconnect y de los PEs
 void generateCSVReports(const Interconnect& interconnect, const std::vector<std::unique_ptr<PE>>& pes) {
     // 1. Reporte del Interconnect
     std::ofstream ic_csv("interconnect_report.csv");
@@ -83,22 +86,30 @@ void generateCSVReports(const Interconnect& interconnect, const std::vector<std:
     std::cout << " - pe_report.csv\n";
 }
 
+// Función principal
+// Esta función inicializa el sistema, carga las instrucciones de los PEs,
+// crea los objetos necesarios y lanza los hilos para cada PE.
+// También maneja la interacción con el usuario para el modo stepping y genera los reportes al final.
 int main() {
+
     // Inicializar el número de PEs y crear los vectores para almacenar PEs y sus hilos
     const int NUM_PE = 10;
-    const int BYTE_PENALTY = 100; // Penalización en bytes en milisegundos
     std::vector<std::unique_ptr<PE>> pes;
     std::vector<std::thread> pe_threads;
+
+    // Inicializar el tiempo de penalización en milisegundos
+    const int BYTE_PENALTY = 100; // Penalización en bytes en milisegundos
 
     // Crear e iniciar Interconnect
     Interconnect interconnect;
 
 
+    // Se establece el modo de programación FIFO o QoS y se elige el modo ejecución
     interconnect.setSchedulingMode(false); // false = usar modo QoS
-    interconnect.setSteppingMode(false);  // Activa el modo stepping
+    interconnect.setSteppingMode(true);  // Activa el modo stepping
 
-
-    interconnect.setPenaltyTimers(200, BYTE_PENALTY); // Establecer los tiempos de penalización en milisegundos
+    // Establecer los tiempos de penalización en milisegundos
+    interconnect.setPenaltyTimers(200, BYTE_PENALTY); 
     //                           base, penalidad en milisegundos                             
 
     // Crear memoria y arrancarla
@@ -108,18 +119,23 @@ int main() {
 
     });
 
-    memory.setPenaltyTimers(1,(BYTE_PENALTY/1000)); // Establecer los tiempos de penalización en memoria en segundos 
+    // Establecer los tiempos de penalización en memoria en segundos 
+    memory.setPenaltyTimers(1,(BYTE_PENALTY/1000)); 
     //                      base, penalidad en segundos
+    
+    // Iniciar el hilo de gestión de operaciones de memoria
     memory.start();
 
-    
+    // Conectar la memoria al Interconnect
     interconnect.setMemory(&memory); 
+
+    // Iniciar el Interconnect
     interconnect.start();
 
     // Cargar instrucciones y crear PEs
     for (int pe_id = 1; pe_id <= NUM_PE; ++pe_id) {
-        std::string filename = "data/Workload_1/PE" + std::to_string(pe_id) + ".txt";
-        std::vector<SMS> instrs = parseInstructionsFromFile(filename);
+        std::string filename = "data/Workload_2/PE" + std::to_string(pe_id) + ".txt";
+        std::vector<SMS> instrs = parseInstructionsFromFile(filename); // Cargar instrucciones desde el archivo
     
         int qos_dummy = 0;
 
@@ -130,8 +146,7 @@ int main() {
 
         auto pe = std::make_unique<PE>(pe_id, qos_dummy, instrs);
 
-    
-        interconnect.registerPE(pe_id, pe.get());
+        interconnect.registerPE(pe_id, pe.get()); // Registrar el PE en el Interconnect
 
         pes.push_back(std::move(pe));
     }
@@ -145,7 +160,7 @@ int main() {
         });
     }
 
-
+    // Hilo para el modo stepping
     std::thread stepping_thread([&interconnect]() {
         std::string input;
         while (true) {
@@ -160,36 +175,42 @@ int main() {
         }
     });
     
-    
-
     // Esperar a que todos los PE terminen
     for (auto& t : pe_threads) {
         t.join();
     
     }
     
+    // Imprimir estadísticas de cada PE
     for (const auto& pe : pes) {
         pe->printStatistics();
     }
 
+
+    // Generar reportes CSV
     generateCSVReports(interconnect, pes);
     generatePECSVReport(pes);
 
+    // Limpiar los PEs
     pes.clear();
 
+    // Detener el Interconnect a
     interconnect.stop();  
     
+    // Detener el hilo de stepping si es necesario
     if (stepping_thread.joinable()) {
         std::cout << "[STEPPING] Todos los PEs han terminado. Presiona ENTER para salir.\n";
         std::cin.get();
         stepping_thread.join();
     }
 
- 
+    // Detener la memoria
     memory.stop();
 
+    // Imprimir estadísticas del Interconnect
     interconnect.printStatistics();
 
+    // Generar gráficos de los reportes CSV utilizando Python
     system("python3 generate_graphs.py");
 
     return 0;

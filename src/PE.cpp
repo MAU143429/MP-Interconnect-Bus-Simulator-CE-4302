@@ -15,12 +15,17 @@ PE::PE(int id, int qos, const std::vector<SMS>& instructions)
 // Funcion que ejecuta las instrucciones de la PE
 void PE::run(std::function<bool(const SMS&)> send_to_interconnect) {
     
+    // Guardar el callback de envío
     send_callback = send_to_interconnect;
+
     auto start_time = std::chrono::steady_clock::now();
+
+    // Verificar si la lista de instrucciones está vacía o esta esperando respuesta del bus de interconexión
     while (current_instruction_index < instruction_list.size() || awaiting_response) {
 
         if (!awaiting_response) {
 
+            // Enviar la instrucción actual al bus de interconexión
             const SMS& instr = instruction_list[current_instruction_index];
 
             stats.recordSentMessage(instr);
@@ -56,8 +61,12 @@ void PE::run(std::function<bool(const SMS&)> send_to_interconnect) {
 
 // Funcion que recibe la respuesta del bus de interconexión
 void PE::receiveResponse(const SMS& response) {
+
+    // Verificar si la respuesta es para este PE
     if (response.dest != id) return;  // Ignorar si no es para este PE
     stats.responses_received++;
+
+    // Imprimir información de la respuesta
     switch (response.type) {
         case MessageType::READ_RESP: { 
             std::cout << "[PE" << id << "] READ_RESP recibida.\n";
@@ -76,6 +85,7 @@ void PE::receiveResponse(const SMS& response) {
         case MessageType::BROADCAST_INVALIDATE: {
             std::cout << "[PE" << id << "] Recibido BROADCAST_INVALIDATE. Enviando INV_ACK.\n";
 
+            // Enviar INV_ACK al bus de interconexión para confirmar la invalidación
             SMS ack;
             ack.type = MessageType::INV_ACK;
             ack.src = id;
@@ -94,6 +104,8 @@ void PE::receiveResponse(const SMS& response) {
     }
 }
 
+// Funcion que convierte el tipo de mensaje a una cadena de texto
+// Esta función es útil para imprimir estadísticas y depurar
 const char* MessageTypeToString(MessageType type) {
     switch(type) {
         case MessageType::WRITE_MEM: return "WRITE_MEM";
@@ -107,6 +119,7 @@ const char* MessageTypeToString(MessageType type) {
     }
 }
 
+// Funcion que imprime las estadisticas de la PE al finalizar la ejecucion
 void PE::printStatistics() const {
     std::cout << "\n=== PE " << id << " Statistics ===\n";
     std::cout << "Instructions executed: " << stats.instructions_executed << "\n";
@@ -123,6 +136,7 @@ void PE::printStatistics() const {
     }
 }
 
+// Funcion que convierte las estadisticas de la PE a una cadena de texto en formato CSV
 std::string PE::getCSVLine() const {
     std::ostringstream csv_line;
     csv_line << id << ","
@@ -150,22 +164,27 @@ const std::vector<SMS>& PE::getInstructionList() const {
     return instruction_list;
 }
 
+// Funcion que devuelve la cantidad de instrucciones ejecutadas
 int PE::getInstructionsExecuted() const {
     return stats.instructions_executed;
 }
 
+// Funcion que devuelve la cantidad de respuestas recibidas
 int PE::getResponsesReceived() const {
     return stats.responses_received;
 }
 
+// Funcion que devuelve la cantidad de bytes enviados
 size_t PE::getBytesSent() const {
     return stats.total_bytes_sent;
 }
 
+// Funcion que devuelve el tiempo de espera
 double PE::getWaitTime() const {
     return stats.total_wait_time.count();
 }
 
+// Funcion que devuelve el tiempo de ejecucion
 double PE::getExecutionTime() const {
     return stats.total_execution_time.count();
 }

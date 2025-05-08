@@ -2,12 +2,15 @@
 #include <iostream>
 #include <string>
 
+
+// Constructor por defecto
 SMS::SMS()
     : type(MessageType::READ_MEM),  // Valor por defecto, puede ser cualquiera válido
       src(0), addr(0), size(0), qos(0), dest(0),
       inv_cache_line(0), num_of_cache_lines(0),
       start_cache_line(0), status(0), data{} {}
 
+// Constructor con tipo de mensaje
 SMS::SMS(MessageType t)
     : type(t),
       src(0),
@@ -21,6 +24,7 @@ SMS::SMS(MessageType t)
       status(0),
       data{} {}
 
+// Método para imprimir la información del mensaje
 void SMS::printInfo() const {
     
     std::cout << "Message Info:" << std::endl;
@@ -42,7 +46,7 @@ void SMS::printInfo() const {
     
 }
 
-
+// Función para calcular el tamaño del mensaje en bytes
 size_t SMS::calculateSize() const {
     size_t size_sms = sizeof(type) + sizeof(src) + sizeof(dest) + sizeof(qos);
     
