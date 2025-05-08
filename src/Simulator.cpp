@@ -106,7 +106,7 @@ int main() {
 
     // Se establece el modo de programación FIFO o QoS y se elige el modo ejecución
     interconnect.setSchedulingMode(false); // false = usar modo QoS
-    interconnect.setSteppingMode(true);  // Activa el modo stepping
+    interconnect.setSteppingMode(false);  // Activa el modo stepping
 
     // Establecer los tiempos de penalización en milisegundos
     interconnect.setPenaltyTimers(200, BYTE_PENALTY); 

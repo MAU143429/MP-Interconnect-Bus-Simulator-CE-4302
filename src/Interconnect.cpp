@@ -123,7 +123,10 @@ void Interconnect::processQueue() {
         // Si el Interconnect no está en ejecución y la cola está vacía, salir
         if (message_queue.empty()) {
             lock.unlock();  // liberar el mutex antes de chequear condiciones globales
-            std::this_thread::sleep_for(std::chrono::milliseconds(1)); // QUITAR ESTE SLEEP LO ANTES POSIBLE
+
+            auto ready_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(1);
+            wait_until(ready_time);
+
             continue;
         }
         
