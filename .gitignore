@@ -1,39 +1,82 @@
-# Archivos de compilación
+# This file is used to ignore files which are generated
+# ----------------------------------------------------------------------------
+
+*~
+*.autosave
+*.a
+*.core
+*.moc
 *.o
 *.obj
-*.exe
-*.out
-*.a
+*.orig
+*.rej
 *.so
-*.dll
-
-# Archivos generados por el build
-build/
-bin/
-*.log
-
-# Archivos del sistema y editores
+*.so.*
+*_pch.h.cpp
+*_resource.rc
+*.qm
+.#*
+*.*#
+core
+!core/
+tags
 .DS_Store
+.directory
+*.debug
+Makefile*
+*.prl
+*.app
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
 Thumbs.db
+*.res
+*.rc
+/.qmake.cache
+/.qmake.stash
 
-# Archivos de VSCode
-.vscode/
-*.code-workspace
+# qtcreator generated files
+*.pro.user*
+*.qbs.user*
+CMakeLists.txt.user*
 
-# Archivos del proyecto
-pe*_encoded.txt
-*.txt~
+# xemacs temporary files
+*.flc
 
-# Makefiles u otros scripts generados
+# Vim temporary files
+.*.swp
 
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
+# Visual Studio generated files
+*.ib_pdb_index
+*.idb
+*.ilk
+*.pdb
+*.sln
+*.suo
+*.vcproj
+*vcproj.*.*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj
+*vcxproj.*
 
-# Archivos de respaldo
-*~
-*.bak
+# MinGW generated files
+*.Debug
+*.Release
 
-# Archivos ocultos de depuración (gdb/lldb)
-.gdb_history
-.lldb_history
+# Python byte code
+*.pyc
+
+# Binaries
+# --------
+*.dll
+*.exe
+
+# Directories with generated files
+.moc/
+.obj/
+.pch/
+.rcc/
+.uic/
+/build*/

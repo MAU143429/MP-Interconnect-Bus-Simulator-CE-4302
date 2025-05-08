@@ -1,4 +1,4 @@
-#include "SMS.h"
+#include "../include/SMS.h"
 #include <iostream>
 
 SMS::SMS()
