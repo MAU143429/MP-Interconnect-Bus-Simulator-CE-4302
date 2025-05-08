@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "sms.h"
+#include "SMS.h"
 #include <vector>
 #include <string>
 

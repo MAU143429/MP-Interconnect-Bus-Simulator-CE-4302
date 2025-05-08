@@ -113,7 +113,6 @@ static SMS parseInstructionToSMS(const std::string& line) {
 std::vector<SMS> parseInstructionsFromFile(const std::string& filename) {
     std::ifstream file(filename);
     std::vector<SMS> messages;
-
     if (!file.is_open()) {
         std::cerr << "No se pudo abrir el archivo: " << filename << std::endl;
         return messages;
