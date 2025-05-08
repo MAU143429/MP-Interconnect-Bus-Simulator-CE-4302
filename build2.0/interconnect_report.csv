@@ -1,0 +1,11 @@
+Metric,Value
+Total Messages Processed,150
+Total Bytes Transferred,3020
+Total Processing Time (sec),0.0148483
+WRITE_MEM Messages,10
+READ_MEM Messages,10
+BROADCAST_INVALIDATE Messages,10
+INV_ACK Messages,90
+INV_COMPLETE Messages,10
+READ_RESP Messages,10
+WRITE_RESP Messages,10

@@ -90,7 +90,7 @@ void generateCSVReports(const Interconnect& interconnect, const std::vector<std:
 // Esta función inicializa el sistema, carga las instrucciones de los PEs,
 // crea los objetos necesarios y lanza los hilos para cada PE.
 // También maneja la interacción con el usuario para el modo stepping y genera los reportes al final.
-int main2() {
+int main() {
 
     // Inicializar el número de PEs y crear los vectores para almacenar PEs y sus hilos
     const int NUM_PE = 10;
@@ -132,24 +132,22 @@ int main2() {
     // Iniciar el Interconnect
     interconnect.start();
 
-    // Cargar instrucciones y crear PEs
+    // Cargar instrucciones y crear PEs 
     for (int pe_id = 1; pe_id <= NUM_PE; ++pe_id) {
-        std::string filename = "data/Workload_2/PE" + std::to_string(pe_id) + ".txt";
-        std::vector<SMS> instrs = parseInstructionsFromFile(filename); // Cargar instrucciones desde el archivo
-    
-        int qos_dummy = 0;
+        std::string filename = "../data/Workload_2/PE" + std::to_string(pe_id) + ".txt";
+        std::vector<SMS> instrs = parseInstructionsFromFile(filename, pe_id); // Cargar instrucciones desde el archivo
 
         if(instrs.empty()) {
             std::cerr << "Error: No instructions for PE " << pe_id << std::endl;
             continue;
         }
 
-        auto pe = std::make_unique<PE>(pe_id, qos_dummy, instrs);
+        auto pe = std::make_unique<PE>(pe_id, pe_id, instrs);
 
         interconnect.registerPE(pe_id, pe.get()); // Registrar el PE en el Interconnect
 
         pes.push_back(std::move(pe));
-    }
+    } 
 
     // Lanzar hilos para cada PE
     for (auto& pe : pes) {
