@@ -132,7 +132,7 @@ int main() {
     // Iniciar el Interconnect
     interconnect.start();
 
-    // Cargar instrucciones y crear PEs
+    // Cargar instrucciones y crear PEs 
     for (int pe_id = 1; pe_id <= NUM_PE; ++pe_id) {
         std::string filename = "../data/Workload_2/PE" + std::to_string(pe_id) + ".txt";
         std::vector<SMS> instrs = parseInstructionsFromFile(filename, pe_id); // Cargar instrucciones desde el archivo
@@ -147,7 +147,7 @@ int main() {
         interconnect.registerPE(pe_id, pe.get()); // Registrar el PE en el Interconnect
 
         pes.push_back(std::move(pe));
-    }
+    } 
 
     // Lanzar hilos para cada PE
     for (auto& pe : pes) {

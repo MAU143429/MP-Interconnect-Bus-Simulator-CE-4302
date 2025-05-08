@@ -39,7 +39,7 @@
      <enum>QFrame::Shape::Box</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="page">
      <widget class="QWidget" name="verticalLayoutWidget">
@@ -650,8 +650,8 @@
      <widget class="QLabel" name="main_graphic">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>90</y>
+        <x>150</x>
+        <y>20</y>
         <width>511</width>
         <height>241</height>
        </rect>
@@ -671,21 +671,21 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QTextBrowser" name="textBrowser">
+     <widget class="QTextBrowser" name="logBox">
       <property name="geometry">
        <rect>
-        <x>560</x>
-        <y>80</y>
-        <width>221</width>
-        <height>351</height>
+        <x>10</x>
+        <y>300</y>
+        <width>781</width>
+        <height>291</height>
        </rect>
       </property>
      </widget>
      <widget class="QLabel" name="label_15">
       <property name="geometry">
        <rect>
-        <x>630</x>
-        <y>35</y>
+        <x>340</x>
+        <y>270</y>
         <width>101</width>
         <height>31</height>
        </rect>
