@@ -8,6 +8,10 @@
 #include <atomic>
 #include <map>
 
+constexpr size_t MAX_CACHE_BLOCKS = 128; // Tamaño máximo de bloques de caché
+constexpr size_t CACHE_BLOCK_WIDTH = 16; // Tamaño de cada bloque de caché en bytes
+
+
 // Estructura para almacenar estadísticas de cada PE
 struct PEStats {
     int instructions_executed = 0;
@@ -68,6 +72,9 @@ private:
     int qos;
     std::vector<SMS> instruction_list;
     size_t current_instruction_index;
+
+    // Cache privada de cada PE
+    std::array<uint16_t, MAX_CACHE_BLOCKS> cache;
 
     // Varibles atomicas para controlar el estado de espera de respuesta
     std::atomic<bool> awaiting_response;

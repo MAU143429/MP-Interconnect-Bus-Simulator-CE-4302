@@ -46,6 +46,9 @@ public:
     void stop();
 
 private:
+    // Creación de la memoria compartida
+    std::array<uint32_t, SHARED_MEMORY_SIZE> memory{};
+
     // Hilo de gestión de operaciones
     void managerThread();
 
