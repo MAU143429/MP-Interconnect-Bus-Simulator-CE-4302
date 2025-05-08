@@ -95,7 +95,7 @@ int main() {
 
 
     interconnect.setSchedulingMode(false); // false = usar modo QoS
-    interconnect.setSteppingMode(true);  // Activa el modo stepping
+    interconnect.setSteppingMode(false);  // Activa el modo stepping
 
 
     interconnect.setPenaltyTimers(200, BYTE_PENALTY); // Establecer los tiempos de penalización en milisegundos
@@ -167,7 +167,13 @@ int main() {
         t.join();
     
     }
+    
+    for (const auto& pe : pes) {
+        pe->printStatistics();
+    }
 
+    generateCSVReports(interconnect, pes);
+    generatePECSVReport(pes);
 
     pes.clear();
 
@@ -179,32 +185,10 @@ int main() {
         stepping_thread.join();
     }
 
-    memory.stop();
-    
-       
-
-    
-
-
-
-    /*
-      stepping_thread.join();
-
-    for (const auto& pe : pes) {
-        pe->printStatistics();
-    }
-
-    generateCSVReports(interconnect, pes);
-    generatePECSVReport(pes);
-
-    pes.clear();  // Limpiar el vector de PEs
-
-    interconnect.stop();
-
+ 
     memory.stop();
 
     interconnect.printStatistics();
-
 
     system("python3 generate_graphs.py");
 

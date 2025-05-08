@@ -1,7 +1,7 @@
 Metric,Value
 Total Messages Processed,434
 Total Bytes Transferred,9413
-Total Processing Time (sec),2.75947
+Total Processing Time (sec),2.44356
 WRITE_MEM Messages,38
 READ_MEM Messages,25
 BROADCAST_INVALIDATE Messages,28
