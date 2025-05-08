@@ -671,7 +671,7 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QTextBrowser" name="textBrowser">
+     <widget class="QTextBrowser" name="logBox">
       <property name="geometry">
        <rect>
         <x>10</x>
