@@ -27,6 +27,7 @@ int main() {
         interconnect.receiveMessage(resp);
 
     });
+    
     memory.start();
 
     
