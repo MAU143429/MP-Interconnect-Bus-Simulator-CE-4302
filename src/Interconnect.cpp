@@ -2,6 +2,12 @@
 #include "../include/Memory.h"
 #include <iostream>
 #include <chrono>
+#include <numeric>
+
+
+
+InterconnectStats icstats;
+
 
 Interconnect::Interconnect() : running(false) {}
 
@@ -93,6 +99,8 @@ void Interconnect::setPenaltyTimers(double new_penalty_timer, double new_penalty
 
 
 void Interconnect::processQueue() {
+    auto start_time = std::chrono::steady_clock::now();
+    
     while (running || !message_queue.empty() || (memory && !memory->isIdle())) {
         std::unique_lock<std::mutex> lock(queue_mutex);
         cv.wait(lock, [&]() {
@@ -135,6 +143,12 @@ void Interconnect::processQueue() {
 
         lock.unlock();
 
+        // Antes de procesar cada mensaje:
+        auto msg_start = std::chrono::steady_clock::now();
+        icstats.message_counts[msg.type]++;
+        icstats.messages_per_pe[msg.src]++;
+        icstats.total_bytes_transferred += msg.calculateSize();
+
         // Si es BROADCAST_INVALIDATE, manejar toda la lógica especial
         if (msg.type == MessageType::BROADCAST_INVALIDATE) {
             std::cout << "[INTERCONNECT] Procesando BROADCAST_INVALIDATE de PE" << msg.src << " con delay de 0,1s \n";
@@ -169,6 +183,10 @@ void Interconnect::processQueue() {
                 SMS ack_msg = invalidation_queue.front();
                 invalidation_queue.pop();
 
+                icstats.message_counts[ack_msg.type]++;
+                icstats.messages_per_pe[ack_msg.src]++;
+                icstats.total_bytes_transferred += ack_msg.calculateSize();
+
                 std::cout << "[INTERCONNECT] Procesando INV_ACK de PE" << ack_msg.src << " (delay 0.1s)\n";
                 wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(PENALTY_BYTES));
 
@@ -180,9 +198,14 @@ void Interconnect::processQueue() {
             std::cout << "[INTERCONNECT] Todos los INV_ACK recibidos. Enviando INV_COMPLETE al PE" << current_invalidation->origin_id << "\n";
 
             SMS complete_msg;
+
             complete_msg.type = MessageType::INV_COMPLETE;
             complete_msg.dest = current_invalidation->origin_id;
             complete_msg.qos = current_invalidation->original_msg.qos;
+
+            icstats.message_counts[complete_msg.type]++;
+            icstats.messages_per_pe[complete_msg.dest]++;
+            icstats.total_bytes_transferred += complete_msg.calculateSize();
 
             wait_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(PENALTY_TIMER));
 
@@ -239,9 +262,71 @@ void Interconnect::processQueue() {
         } else {
             std::cerr << "[INTERCONNECT] Error: memoria no conectada\n";
         }
+        auto msg_end = std::chrono::steady_clock::now();
+        icstats.total_processing_time += (msg_end - msg_start);
     }
 
     std::cout << "[INTERCONNECT] Finalizó procesamiento de mensajes.\n";
+    icstats.total_operation_time = std::chrono::steady_clock::now() - start_time;
+}
+
+std::string messageTypeToString(MessageType type) {
+    switch (type) {
+        case MessageType::WRITE_MEM: return "WRITE_MEM";
+        case MessageType::READ_MEM: return "READ_MEM";
+        case MessageType::BROADCAST_INVALIDATE: return "BROADCAST_INVALIDATE";
+        case MessageType::INV_ACK: return "INV_ACK";
+        case MessageType::INV_COMPLETE: return "INV_COMPLETE";
+        case MessageType::READ_RESP: return "READ_RESP";
+        case MessageType::WRITE_RESP: return "WRITE_RESP";
+        default: return "UNKNOWN";
+    }
+}
+
+void Interconnect::printStatistics() const {
+    std::cout << "\n=== Interconnect Statistics ===\n";
+    std::cout << "Total messages processed: " << std::accumulate(
+        icstats.message_counts.begin(), icstats.message_counts.end(), 0,
+        [](int sum, const auto& pair) { return sum + pair.second; }) << "\n";
+        
+    std::cout << "Total bytes transferred: " << icstats.total_bytes_transferred << " bytes\n";
+    std::cout << "Total processing time: " << icstats.total_processing_time.count() << " seconds\n";
+    std::cout << "Total operation time: " << icstats.total_operation_time.count() << " seconds\n";
     
+    std::cout << "\nMessage types distribution:\n";
+    for (const auto& [type, count] : icstats.message_counts) {
+        std::cout << messageTypeToString(type) << ": " << count << "\n";
+    }
+    
+    std::cout << "\nMessages per PE:\n";
+    for (const auto& [pe_id, count] : icstats.messages_per_pe) {
+        if (pe_id == 0) {
+            std::cout << "Memory: " << count << " messages\n";
+        } else
+        {
+            std::cout << "PE" << pe_id << ": " << count << " messages\n";
+        }
+        
+    }
+}
+
+int Interconnect::getTotalMessages() const {
+    int total = 0;
+    for (const auto& [type, count] : icstats.message_counts) {
+        total += count;
+    }
+    return total;
+}
+
+size_t Interconnect::getTotalBytes() const {
+    return icstats.total_bytes_transferred;
+}
+
+double Interconnect::getProcessingTime() const {
+    return icstats.total_processing_time.count();
+}
+
+std::map<MessageType, int> Interconnect::getMessageCounts() const {
+    return icstats.message_counts;
 }
 

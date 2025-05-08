@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include <chrono>
 
 enum class MessageType {
     WRITE_MEM,
@@ -12,6 +13,12 @@ enum class MessageType {
     INV_COMPLETE,
     READ_RESP,
     WRITE_RESP
+};
+
+struct MessageStats {
+    size_t size_bytes;
+    std::chrono::steady_clock::time_point start_time;
+    std::chrono::steady_clock::time_point end_time;
 };
 
 class SMS {
@@ -33,6 +40,7 @@ public:
     SMS();                   // constructor vacio
 
     void printInfo() const;
+    size_t calculateSize() const;
 };
 
 #endif

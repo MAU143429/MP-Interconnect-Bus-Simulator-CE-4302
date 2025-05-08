@@ -13,8 +13,17 @@
 #include <chrono>
 #include <functional>
 #include <optional>
+#include <map>
 
 constexpr int CACHE_WIDTH = 16; // Tamaño de la línea de caché en bytes
+
+struct InterconnectStats {
+    std::map<MessageType, int> message_counts;
+    size_t total_bytes_transferred;
+    std::chrono::duration<double> total_processing_time;
+    std::chrono::duration<double> total_operation_time;
+    std::map<int, int> messages_per_pe; // PE ID -> count
+};
 
 class Interconnect {
 public:
@@ -39,6 +48,12 @@ public:
 
     void registerPE(int id, PE* pe);
 
+    void printStatistics() const;
+
+    int getTotalMessages() const;
+    size_t getTotalBytes() const;
+    double getProcessingTime() const;
+    std::map<MessageType, int> getMessageCounts() const;
 
 private:
     void processQueue(); // Función del hilo
