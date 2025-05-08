@@ -37,3 +37,57 @@ cmake_install.cmake
 # Archivos ocultos de depuración (gdb/lldb)
 .gdb_history
 .lldb_history
+
+# Entornos virtuales
+venv/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache y bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de instalación y distribución
+*.egg-info/
+*.egg
+dist/
+build/
+pip-wheel-metadata/
+
+# Archivos de entorno
+.env
+.venv
+env/
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Archivos de Jupyter Notebook
+.ipynb_checkpoints/
+
+# Archivos de testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Archivos de base de datos
+*.db
+*.sqlite
+
+# Archivos de log
+*.log
+
+# Archivos de sistema
+Thumbs.db
