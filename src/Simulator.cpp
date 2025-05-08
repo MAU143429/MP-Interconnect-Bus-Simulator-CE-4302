@@ -20,6 +20,8 @@ int main() {
 
 
     interconnect.setSchedulingMode(false); // false = usar modo QoS
+    interconnect.setSteppingMode(true);  // Activa el modo stepping
+
 
     interconnect.setPenaltyTimers(200, BYTE_PENALTY); // Establecer los tiempos de penalización en milisegundos
     //                           base, penalidad en milisegundos                             
@@ -62,17 +64,61 @@ int main() {
         });
     }
 
+
+    std::thread stepping_thread([&interconnect]() {
+        std::string input;
+        while (true) {
+            std::getline(std::cin, input);
+    
+            // Si ya terminó, salir
+            if (!interconnect.isRunning()) break;
+    
+            if (input == "exit") break;
+    
+            interconnect.triggerNextStep();
+        }
+    });
+    
+    
+
     // Esperar a que todos los PE terminen
     for (auto& t : pe_threads) {
         t.join();
+    
     }
+
+
+    pes.clear();
+
+    interconnect.stop();  
+    
+    if (stepping_thread.joinable()) {
+        std::cout << "[STEPPING] Todos los PEs han terminado. Presiona ENTER para salir.\n";
+        std::cin.get();
+        stepping_thread.join();
+    }
+
+    memory.stop();
+    
+       
+
+    
+
+
+
+    /*
+      stepping_thread.join();
 
     pes.clear();  // Limpiar el vector de PEs
 
     interconnect.stop();
 
     memory.stop();
+    
+    */
 
+ 
+    
     
     return 0;
 }

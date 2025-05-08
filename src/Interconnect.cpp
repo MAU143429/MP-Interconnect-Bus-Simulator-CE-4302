@@ -57,6 +57,27 @@ void Interconnect::setSchedulingMode(bool fifo) {
     fifo_mode = fifo;
 }
 
+void Interconnect::setSteppingMode(bool enabled) {
+    stepping_mode = enabled;
+    step_ready = !enabled;  // Si no está en modo stepping, permitir paso automático
+}
+
+bool Interconnect::getSteppingMode() {
+    return stepping_mode;
+}
+
+void Interconnect::triggerNextStep() {
+    {
+        std::lock_guard<std::mutex> lock(step_mutex);
+        step_ready = true;
+    }
+    step_cv.notify_one();
+}
+
+bool Interconnect::isRunning() const {
+    return running;
+}
+
 
 void Interconnect::wait_until(std::chrono::steady_clock::time_point ready_time) {
     while (std::chrono::steady_clock::now() < ready_time) {
@@ -81,9 +102,11 @@ void Interconnect::processQueue() {
         //if (!running || message_queue.empty()) continue;
 
         if (message_queue.empty()) {
-            std::this_thread::yield();
+            lock.unlock();  // liberar el mutex antes de chequear condiciones globales
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));  // leve espera
             continue;
         }
+        
 
         SMS msg;
         if (fifo_mode) {
@@ -99,6 +122,16 @@ void Interconnect::processQueue() {
             msg = *best_it;
             message_queue.erase(best_it);
         }
+
+
+        if (stepping_mode) {
+            std::cout << "[STEPPING] Esperando ENTER para continuar con la siguiente instrucción...\n";
+            std::unique_lock<std::mutex> lock(step_mutex);
+            step_cv.wait(lock, [&] { return step_ready; });
+            step_ready = false;
+        }
+        
+
 
         lock.unlock();
 
@@ -209,5 +242,6 @@ void Interconnect::processQueue() {
     }
 
     std::cout << "[INTERCONNECT] Finalizó procesamiento de mensajes.\n";
+    
 }
 

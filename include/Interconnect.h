@@ -26,6 +26,11 @@ public:
 
 
     void setPenaltyTimers(double new_penalty_timer, double new_penalty_bytes);
+    
+    void setSteppingMode(bool enabled);
+    bool getSteppingMode();
+    void triggerNextStep();
+    bool isRunning() const;
 
     
     void setMemory(class Memory* mem);
@@ -65,6 +70,13 @@ private:
     std::unordered_map<int, PE*> pe_registry;
     std::queue<SMS> invalidation_queue;   // Cola para mensajes INV_ACK
     std::optional<InvalidationState> current_invalidation;
+    
+
+    bool stepping_mode = false;
+    bool step_ready = false;
+    std::mutex step_mutex;
+    std::condition_variable step_cv;
+
 
 
 
