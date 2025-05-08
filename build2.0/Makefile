@@ -13,7 +13,9 @@ OBJS = $(addprefix $(OBJ_DIR)/, $(patsubst %.cpp, %.o, $(SRC_FILES)))
 
 # Compilador y flags
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -I$(INC_DIR)
+#CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -I$(INC_DIR)
+CXXFLAGS = -std=c++20 -w -O2 -I$(INC_DIR)
+
 
 # Regla principal
 all: $(TARGET)
@@ -37,4 +39,3 @@ run: $(TARGET)
 # Limpiar
 clean:
 	rm -rf $(OBJ_DIR)/*.o $(TARGET)
-

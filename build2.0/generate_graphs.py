@@ -47,6 +47,38 @@ def plot_bandwidth_utilization(ic_stats, bandwidth):
     plt.savefig('bandwidth_utilization.png')
     plt.close()
 
+def plot_pe_performance(pe_stats):
+    """Comparación de rendimiento entre PEs"""
+    fig, axes = plt.subplots(2, 1, figsize=(12, 10))
+    
+    # Throughput (Instrucciones/segundo)
+    pe_stats['Throughput'] = pe_stats['InstructionsExecuted'] / pe_stats['ExecTimeSec']
+    axes[0].bar(
+        pe_stats['PE_ID'].astype(str),
+        pe_stats['Throughput'],
+        color='#2ca02c'
+    )
+    axes[0].set_title('Throughput por PE (Instrucciones/segundo)')
+    axes[0].set_ylabel('Instrucciones/seg')
+    
+    # Eficiencia (Tiempo útil vs. espera)
+    pe_stats['Efficiency'] = (
+        (pe_stats['ExecTimeSec'] - pe_stats['WaitTimeSec']) / 
+        pe_stats['ExecTimeSec'] * 100
+    )
+    axes[1].bar(
+        pe_stats['PE_ID'].astype(str),
+        pe_stats['Efficiency'],
+        color='#d62728'
+    )
+    axes[1].set_title('Eficiencia por PE (% Tiempo Útil)')
+    axes[1].set_ylabel('Porcentaje')
+    axes[1].set_ylim(0, 100)
+    
+    plt.tight_layout()
+    plt.savefig('pe_performance.png')
+    plt.close()
+
 def plot_pe_activity(pe_stats):
     fig, axes = plt.subplots(3, 1, figsize=(12, 12))
     
@@ -96,11 +128,13 @@ def main():
     plot_bandwidth_utilization(ic_stats, bandwidth)
     plot_pe_activity(pe_stats)
     plot_message_type_distribution(ic_stats)
+    plot_pe_performance(pe_stats)
     
     print("Gráficos generados:")
     print("- bandwidth_utilization.png")
     print("- pe_activity.png")
     print("- message_distribution.png")
+    print("- pe_performance.png")
 
 if __name__ == "__main__":
     main()
